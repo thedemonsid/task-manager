@@ -1,101 +1,333 @@
-import Image from "next/image";
+"use client";
+import { AnimatePresence, useAnimate, usePresence } from "framer-motion";
+import React, {
+  Dispatch,
+  SetStateAction,
+  useEffect,
+  useState,
+  JSX,
+} from "react";
+import { FiClock, FiPlus, FiTrash2 } from "react-icons/fi";
+import { motion } from "framer-motion";
 
-export default function Home() {
+export default function VanishList(): JSX.Element {
+  const [todos, setTodos] = useState<TODO[]>([
+    {
+      id: 1,
+      text: "Take out trash",
+      checked: false,
+      time: "5 mins",
+    },
+    {
+      id: 2,
+      text: "Do laundry",
+      checked: false,
+      time: "10 mins",
+    },
+    {
+      id: 3,
+      text: "Have existential crisis",
+      checked: true,
+      time: "12 hrs",
+    },
+    {
+      id: 4,
+      text: "Get dog food",
+      checked: false,
+      time: "1 hrs",
+    },
+  ]);
+
+  const handleCheck = (id: number) => {
+    setTodos((pv) =>
+      pv.map((t) => (t.id === id ? { ...t, checked: !t.checked } : t))
+    );
+  };
+
+  const removeElement = (id: number) => {
+    setTodos((pv) => pv.filter((t) => t.id !== id));
+  };
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
+    <>
+      <div className="mx-auto w-full max-w-xl md:max-w-3xl px-4">
+        <Header />
+        <Todos
+          removeElement={removeElement}
+          todos={todos}
+          handleCheck={handleCheck}
         />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+      </div>
+      <Form setTodos={setTodos} />
+    </>
   );
 }
+
+const Header = () => {
+  const date = new Date();
+  const hours = date.getHours();
+  let greeting = "Good morning! 🌞";
+  let description = "Let's kick off the day with some productivity!";
+
+  if (hours >= 12 && hours < 15) {
+    greeting = "Good afternoon! 🌤️";
+    description = "Power through your tasks before the day ends!";
+  } else if (hours >= 15 && hours < 18) {
+    greeting = "Hello there! ☕";
+    description = "Time for a productive evening ahead!";
+  } else if (hours >= 18 && hours < 22) {
+    greeting = "Good evening! 🌆";
+    description = "Let's wrap up some tasks before the day ends.";
+  } else if (hours >= 22 || hours < 1) {
+    greeting = "Working late? 🌙";
+    description = "Don't forget to get some rest soon!";
+  } else if (hours >= 1 && hours < 6) {
+    greeting = "Hello Night Owl! 🦉";
+    description = "The most productive hours for the focused mind.";
+  } else if (hours >= 6 && hours < 9) {
+    greeting = "Early bird! 🐦";
+    description = "Getting things done before everyone wakes up!";
+  } else if (hours >= 9 && hours < 12) {
+    greeting = "Good morning! 🌞";
+    description = "Let's make this day count!";
+  }
+  return (
+    <div className="mb-6">
+      <h1 className="text-xl font-medium text-white">{greeting}</h1>
+      <p className="text-zinc-400">{description}</p>
+    </div>
+  );
+};
+
+const Form = ({ setTodos }: { setTodos: Dispatch<SetStateAction<TODO[]>> }) => {
+  const [visible, setVisible] = useState(false);
+
+  const [time, setTime] = useState(15);
+  const [text, setText] = useState("");
+  const [unit, setUnit] = useState<"mins" | "hrs">("mins");
+
+  const handleSubmit = () => {
+    if (!text.length) {
+      return;
+    }
+
+    setTodos((pv) => [
+      {
+        id: Math.random(),
+        text,
+        checked: false,
+        time: `${time} ${unit}`,
+      },
+      ...pv,
+    ]);
+
+    setTime(15);
+    setText("");
+    setUnit("mins");
+  };
+
+  return (
+    <div className="fixed bottom-6 left-1/2 w-full max-w-xl md:max-w-3xl -translate-x-1/2 px-4">
+      <AnimatePresence>
+        {visible && (
+          <motion.form
+            initial={{ opacity: 0, y: 25 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 25 }}
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSubmit();
+            }}
+            className="mb-6 w-full rounded border border-zinc-700 bg-zinc-900 p-3 opacity-70"
+          >
+            <textarea
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              placeholder="What do you need to do?"
+              className="h-24 w-full resize-none rounded bg-zinc-900 p-3 text-sm text-zinc-50 placeholder-zinc-500 caret-zinc-50 focus:outline-0 opacity-70"
+            />
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
+                <input
+                  type="number"
+                  className="w-24 rounded bg-zinc-700 px-1.5 py-1 text-sm text-zinc-50 focus:outline-0"
+                  value={time}
+                  onChange={(e) => setTime(parseInt(e.target.value))}
+                />
+                <button
+                  type="button"
+                  onClick={() => setUnit("mins")}
+                  className={`rounded px-1.5 py-1 text-xs ${
+                    unit === "mins"
+                      ? "bg-white text-zinc-950"
+                      : "bg-zinc-300/20 text-zinc-300 transition-colors hover:bg-zinc-600 hover:text-zinc-200"
+                  }`}
+                >
+                  mins
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setUnit("hrs")}
+                  className={`rounded px-1.5 py-1 text-xs ${
+                    unit === "hrs"
+                      ? "bg-white text-zinc-950"
+                      : "bg-zinc-300/20 text-zinc-300 transition-colors hover:bg-zinc-600 hover:text-zinc-200"
+                  }`}
+                >
+                  hrs
+                </button>
+              </div>
+              <button
+                type="submit"
+                className="rounded bg-indigo-600 px-1.5 py-1 text-xs text-indigo-50 transition-colors hover:bg-indigo-500"
+              >
+                Submit
+              </button>
+            </div>
+          </motion.form>
+        )}
+      </AnimatePresence>
+      <button
+        onClick={() => setVisible((pv) => !pv)}
+        className="grid w-full place-content-center rounded-full border border-zinc-700 bg-zinc-900 opacity-70 cursor-pointer py-3 text-lg text-white transition-colors hover:bg-zinc-800 active:bg-zinc-900"
+      >
+        <FiPlus
+          className={`transition-transform ${
+            visible ? "rotate-45" : "rotate-0"
+          }`}
+        />
+      </button>
+    </div>
+  );
+};
+
+type TODO = {
+  id: number;
+  text: string;
+  checked: boolean;
+  time: string;
+};
+
+const Todos = ({
+  todos,
+  handleCheck,
+  removeElement,
+}: {
+  todos: TODO[];
+  handleCheck: Function;
+  removeElement: Function;
+}) => {
+  return (
+    <div className="w-full space-y-3">
+      <AnimatePresence>
+        {todos.map((t) => (
+          <Todo
+            handleCheck={handleCheck}
+            removeElement={removeElement}
+            id={t.id}
+            key={t.id}
+            checked={t.checked}
+            time={t.time}
+          >
+            {t.text}
+          </Todo>
+        ))}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+const Todo = ({
+  removeElement,
+  handleCheck,
+  id,
+  children,
+  checked,
+  time,
+}: {
+  removeElement: Function;
+  handleCheck: Function;
+  id: number;
+  children: string;
+  checked: boolean;
+  time: string;
+}) => {
+  const [isPresent, safeToRemove] = usePresence();
+  const [scope, animate] = useAnimate();
+
+  useEffect(() => {
+    if (!isPresent) {
+      const exitAnimation = async () => {
+        animate(
+          "p",
+          {
+            color: checked ? "#6ee7b7" : "#fca5a5",
+          },
+          {
+            ease: "easeIn",
+            duration: 0.125,
+          }
+        );
+        await animate(
+          scope.current,
+          {
+            scale: 1.025,
+          },
+          {
+            ease: "easeIn",
+            duration: 0.125,
+          }
+        );
+
+        await animate(
+          scope.current,
+          {
+            opacity: 0,
+            x: checked ? 24 : -24,
+          },
+          {
+            delay: 0.75,
+          }
+        );
+        safeToRemove();
+      };
+
+      exitAnimation();
+    }
+  }, [isPresent]);
+
+  return (
+    <motion.div
+      ref={scope}
+      layout
+      className="relative flex w-full items-center gap-3 rounded border border-zinc-700 bg-zinc-900 p-3"
+    >
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={() => handleCheck(id)}
+        className="size-4 accent-indigo-400"
+      />
+
+      <p
+        className={`text-white transition-colors ${
+          checked && "text-zinc-400 line-through"
+        }`}
+      >
+        {children}
+      </p>
+      <div className="ml-auto flex gap-1.5">
+        <div className="flex items-center gap-1.5 whitespace-nowrap rounded bg-zinc-800 px-1.5 py-1 text-xs text-zinc-400">
+          <FiClock />
+          <span>{time}</span>
+        </div>
+        <button
+          onClick={() => removeElement(id)}
+          className="rounded bg-red-300/20 px-1.5 py-1 text-xs text-red-300 transition-colors hover:bg-red-600 hover:text-red-200"
+        >
+          <FiTrash2 />
+        </button>
+      </div>
+    </motion.div>
+  );
+};
