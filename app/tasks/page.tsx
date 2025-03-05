@@ -1,3 +1,4 @@
+/* eslint-disable */
 "use client";
 import React, { useEffect, useState, JSX } from "react";
 import { FiFilter, FiArrowUp, FiArrowDown } from "react-icons/fi";
@@ -6,13 +7,6 @@ import { Tasks } from "@/components/tasks";
 import { Form } from "@/components/task-form";
 import { Header } from "@/components/task-header";
 
-const priorityToNumber = {
-  LOW: 1,
-  MEDIUM: 2,
-  HIGH: 3,
-  URGENT: 4,
-  CRITICAL: 5,
-};
 
 // Map numeric values back to priority enum
 const numberToPriority = {

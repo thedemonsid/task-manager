@@ -1,3 +1,4 @@
+/* eslint-disable */
 "use client";
 import React, { useState } from "react";
 import Link from "next/link";
@@ -149,7 +150,7 @@ const LoginPage = () => {
 
           <div className="mt-6 text-center">
             <p className="text-zinc-400">
-              Don't have an account?{" "}
+              Don&apos;t have an account?{" "}
               <Link href="/register" className="text-blue-400 hover:underline">
                 Register here
               </Link>

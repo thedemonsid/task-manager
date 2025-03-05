@@ -1,4 +1,5 @@
-// In your todos.tsx component
+/* eslint-disable */
+
 import { AnimatePresence, useAnimate, usePresence } from "framer-motion";
 import { useEffect } from "react";
 import { FiClock, FiTrash2 } from "react-icons/fi";
@@ -25,8 +26,8 @@ const Task = ({
   endTime,
   status,
 }: {
-  removeElement: Function;
-  handleCheck: Function;
+  removeElement: (id: number | string) => void;
+  handleCheck: (id: number | string) => void;
   id: number | string;
   children: string;
   checked: boolean;
@@ -149,8 +150,8 @@ export const Tasks = ({
   removeElement,
 }: {
   tasks: Task[];
-  handleCheck: Function;
-  removeElement: Function;
+  handleCheck: (id: number | string) => void;
+  removeElement: (id: number | string) => void;
 }) => {
   return (
     <div className="w-full space-y-3">

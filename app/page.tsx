@@ -6,36 +6,36 @@ const Home = () => {
   const hours = date.getHours();
 
   let greeting = "Good morning!";
-  let description = "Let's kick off the day with some productivity!";
+
   let emoji = "🌞";
 
   if (hours >= 12 && hours < 15) {
     greeting = "Good afternoon!";
-    description = "Power through your tasks before the day ends!";
+
     emoji = "🌤️";
   } else if (hours >= 15 && hours < 18) {
     greeting = "Hello there!";
-    description = "Time for a productive evening ahead!";
+
     emoji = "☕";
   } else if (hours >= 18 && hours < 22) {
     greeting = "Good evening!";
-    description = "Let's wrap up some tasks before the day ends.";
+
     emoji = "🌆";
   } else if (hours >= 22 || hours < 1) {
     greeting = "Working late?";
-    description = "Don't forget to get some rest soon!";
+
     emoji = "🌙";
   } else if (hours >= 1 && hours < 6) {
     greeting = "Hello Night Owl!";
-    description = "The most productive hours for the focused mind.";
+
     emoji = "🦉";
   } else if (hours >= 6 && hours < 9) {
     greeting = "Early bird!";
-    description = "Getting things done before everyone wakes up!";
+
     emoji = "🐦";
   } else if (hours >= 9 && hours < 12) {
     greeting = "Good morning!";
-    description = "Let's make this day count!";
+
     emoji = "🌞";
   }
 
@@ -52,19 +52,23 @@ const Home = () => {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4">
-            <Button
-              size="lg"
-              className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:opacity-90"
-            >
-              Get Started
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              className="border-zinc-700 hover:bg-zinc-800"
-            >
-              Learn More
-            </Button>
+            <Link href="/tasks">
+              <Button
+                size="lg"
+                className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:opacity-90 cursor-pointer"
+              >
+                Get Started
+              </Button>
+            </Link>
+            <Link href="/about">
+              <Button
+                size="lg"
+                variant="outline"
+                className="border-zinc-700 hover:bg-zinc-800 cursor-pointer"
+              >
+                Learn More
+              </Button>
+            </Link>
           </div>
         </div>
 

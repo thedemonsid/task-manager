@@ -142,8 +142,9 @@ export const Form = ({ setTasks, priorityMapping }: FormProps) => {
 
             <div className="flex justify-end">
               <button
+              disabled={!text.length}
                 type="submit"
-                className="rounded bg-indigo-600 px-3 py-1.5 text-sm text-indigo-50 transition-colors hover:bg-indigo-500"
+                className="rounded bg-indigo-600 px-3 py-1.5 text-sm text-indigo-50 transition-colors hover:bg-indigo-500 cursor-pointer disabled:opacity-70"
               >
                 Create Task
               </button>

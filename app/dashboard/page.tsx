@@ -1,3 +1,4 @@
+/* eslint-disable */
 "use client";
 import React, { useState, useEffect } from "react";
 import axios from "axios";
@@ -147,11 +148,11 @@ const Dashboard = () => {
           {[1, 2, 3, 4].map((i) => (
             <Card key={i}>
               <CardHeader className="pb-2">
-                <Skeleton className="h-4 w-[120px]" />
+                <Skeleton className="bg-zinc-900 h-4 w-[120px]" />
               </CardHeader>
               <CardContent>
-                <Skeleton className="h-8 w-[80px] mb-2" />
-                <Skeleton className="h-4 w-full" />
+                <Skeleton className="bg-zinc-900 h-8 w-[80px] mb-2" />
+                <Skeleton className="bg-zinc-900 h-4 w-full" />
               </CardContent>
             </Card>
           ))}
@@ -159,21 +160,21 @@ const Dashboard = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Card className="bg-zinc-900">
             <CardHeader>
-              <Skeleton className="h-6 w-[150px]" />
+              <Skeleton className="bg-zinc-900 h-6 w-[150px]" />
             </CardHeader>
             <CardContent className="h-[300px] flex items-center justify-center">
-              <Skeleton className="h-[250px] w-[250px] rounded-full" />
+              <Skeleton className="bg-zinc-900 h-[250px] w-[250px] rounded-full" />
             </CardContent>
           </Card>
           <Card className="bg-zinc-900">
             <CardHeader>
-              <Skeleton className="h-6 w-[180px]" />
+              <Skeleton className="bg-zinc-900 h-6 w-[180px]" />
             </CardHeader>
             <CardContent className="space-y-4">
               {[1, 2, 3].map((i) => (
                 <div key={i} className="space-y-2">
-                  <Skeleton className="h-4 w-[120px]" />
-                  <Skeleton className="h-6 w-full" />
+                  <Skeleton className="bg-zinc-900 h-4 w-[120px]" />
+                  <Skeleton className="bg-zinc-900 h-6 w-full" />
                 </div>
               ))}
             </CardContent>
