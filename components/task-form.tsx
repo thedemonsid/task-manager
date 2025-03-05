@@ -11,38 +11,33 @@ type FormProps = {
 export const Form = ({ setTasks, priorityMapping }: FormProps) => {
   const [visible, setVisible] = useState(false);
   const [text, setText] = useState("");
-  const [priority, setPriority] = useState(2); // Default to MEDIUM (2)
+  const [priority, setPriority] = useState(2);
 
-  // Initialize with current date/time formatted for datetime-local input
   const now = new Date();
   const localDateTimeFormat = (date: Date) => {
     return date.toISOString().slice(0, 16);
   };
 
-  // Set default start time to now and end time to 30 minutes from now
-  const [startTime, setStartTime] = useState(localDateTimeFormat(now));
+  //* Using ISO string format for indian time zone , there was time gap of 5.30 hours
+  const [startTime, setStartTime] = useState(new Date().toISOString());
   const [endTime, setEndTime] = useState(
-    localDateTimeFormat(new Date(now.getTime() + 30 * 60 * 1000))
+    new Date(Date.now() + 30 * 60 * 1000).toISOString()
   );
 
   const handleSubmit = async () => {
     if (!text.length) return;
 
     try {
-      // Convert the local datetime inputs to ISO string format
       const startTimeISO = new Date(startTime).toISOString();
       const endTimeISO = new Date(endTime).toISOString();
 
-      // Validate that end time is after start time
       if (new Date(endTime) <= new Date(startTime)) {
         alert("End time must be after start time");
         return;
       }
 
-      // Map priority number to enum value
       const priorityEnum = priorityMapping[priority];
 
-      // Create the task on the backend
       const token = localStorage.getItem("authToken");
       const response = await axios.post(
         "http://localhost:8080/api/tasks",
@@ -55,8 +50,6 @@ export const Form = ({ setTasks, priorityMapping }: FormProps) => {
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
-      // Calculate time display
       const diffMs =
         new Date(endTime).getTime() - new Date(startTime).getTime();
       const diffHrs = diffMs / (1000 * 60 * 60);
@@ -65,7 +58,6 @@ export const Form = ({ setTasks, priorityMapping }: FormProps) => {
           ? `${Math.round(diffHrs * 60)} mins`
           : `${Math.round(diffHrs)} hrs`;
 
-      // Add new task to the UI
       const newTask: Task = {
         id: response.data.id,
         text,
@@ -79,9 +71,8 @@ export const Form = ({ setTasks, priorityMapping }: FormProps) => {
 
       setTasks((pv) => [newTask, ...pv]);
 
-      // Reset form
       setText("");
-      setPriority(2); // Reset to MEDIUM
+      setPriority(2);
       setStartTime(localDateTimeFormat(new Date()));
       setEndTime(localDateTimeFormat(new Date(Date.now() + 30 * 60 * 1000)));
       setVisible(false);

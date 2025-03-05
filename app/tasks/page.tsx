@@ -115,22 +115,37 @@ export default function TaskManager(): JSX.Element {
       const task = tasks.find((t) => t.id === id);
       if (!task) return;
 
-      const newStatus = task.status === "PENDING" ? "FINISHED" : "PENDING";
-      const endTime =
-        newStatus === "FINISHED" ? new Date().toISOString() : task.endTime;
+      // Determine if we're completing or un-completing the task
+      const isCompleting = task.status === "PENDING";
+      const newStatus = isCompleting ? "FINISHED" : "PENDING";
+      const endTime = isCompleting ? new Date().toISOString() : task.endTime;
 
-      // Update task in backend
+      // Get the authentication token
       const token = localStorage.getItem("authToken");
-      await axios.patch(
-        `http://localhost:8080/api/tasks/${id}`,
-        {
-          status: newStatus,
-          endTime,
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+
+      if (isCompleting) {
+        await axios.put(
+          `http://localhost:8080/api/tasks/${id}`,
+          {
+            status: "FINISHED",
+            endTime,
+          },
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+      } else {
+        // If un-completing the task, use the regular update endpoint
+        await axios.put(
+          `http://localhost:8080/api/tasks/${id}`,
+          {
+            status: "PENDING",
+          },
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+      }
 
       // Update frontend state
       setTasks(
