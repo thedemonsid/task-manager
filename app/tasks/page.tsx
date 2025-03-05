@@ -1,347 +1,253 @@
 "use client";
-import { AnimatePresence, useAnimate, usePresence } from "framer-motion";
-import React, {
-  Dispatch,
-  SetStateAction,
-  useEffect,
-  useState,
-  JSX,
-} from "react";
-import { FiClock, FiPlus, FiTrash2 } from "react-icons/fi";
-import { motion } from "framer-motion";
+import React, { useEffect, useState, JSX } from "react";
+import { FiFilter, FiArrowUp, FiArrowDown } from "react-icons/fi";
+import axios from "axios";
+import { Tasks } from "@/components/tasks";
+import { Form } from "@/components/task-form";
+import { Header } from "@/components/task-header";
 
-export default function VanishList(): JSX.Element {
-  const [todos, setTodos] = useState<TODO[]>([
-    {
-      id: 1,
-      text: "Take out trash",
-      checked: false,
-      time: "5 mins",
-    },
-    {
-      id: 2,
-      text: "Do laundry",
-      checked: false,
-      time: "10 mins",
-    },
-    {
-      id: 3,
-      text: "Have existential crisis",
-      checked: true,
-      time: "12 hrs",
-    },
-    {
-      id: 4,
-      text: "Get dog food",
-      checked: false,
-      time: "1 hrs",
-    },
-  ]);
+const priorityToNumber = {
+  LOW: 1,
+  MEDIUM: 2,
+  HIGH: 3,
+  URGENT: 4,
+  CRITICAL: 5,
+};
 
-  const handleCheck = (id: number) => {
-    setTodos((pv) =>
-      pv.map((t) => (t.id === id ? { ...t, checked: !t.checked } : t))
-    );
+// Map numeric values back to priority enum
+const numberToPriority = {
+  1: "LOW",
+  2: "MEDIUM",
+  3: "HIGH",
+  4: "URGENT",
+  5: "CRITICAL",
+} as const;
+
+export default function TaskManager(): JSX.Element {
+  // Rename state variables
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [filteredTasks, setFilteredTasks] = useState<Task[]>([]);
+  const [priorityFilter, setPriorityFilter] = useState<number | null>(null);
+  const [statusFilter, setStatusFilter] = useState<"all" | TaskStatus>("all");
+  const [sortBy, setSortBy] = useState<"startTime" | "endTime" | null>(null);
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+
+  // Fetch tasks from the backend
+  useEffect(() => {
+    const fetchTasks = async () => {
+      try {
+        const token = localStorage.getItem("authToken");
+        if (!token) return;
+
+        const response = await axios.get("http://localhost:8080/api/tasks", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        // Transform the backend data to match our Task type
+        const transformedTasks: Task[] = response.data.map((task: any) => ({
+          id: task.id,
+          text: task.title,
+          checked: task.status === "FINISHED",
+          time: calculateTimeDisplay(task.startTime, task.endTime),
+          startTime: task.startTime,
+          endTime: task.endTime,
+          priority: task.priority,
+          status: task.status,
+        }));
+
+        setTasks(transformedTasks);
+      } catch (error) {
+        console.error("Error fetching tasks:", error);
+      }
+    };
+
+    fetchTasks();
+  }, []);
+
+  // Apply filters and sorting whenever tasks change or filters change
+  useEffect(() => {
+    let result = [...tasks];
+
+    // Apply priority filter using the enum mapping
+    if (priorityFilter !== null) {
+      const priorityEnum =
+        numberToPriority[priorityFilter as keyof typeof numberToPriority];
+      result = result.filter((task) => task.priority === priorityEnum);
+    }
+
+    // Apply status filter
+    if (statusFilter !== "all") {
+      result = result.filter((task) => task.status === statusFilter);
+    }
+
+    // Apply sorting
+    if (sortBy) {
+      result.sort((a, b) => {
+        const dateA = new Date(a[sortBy]);
+        const dateB = new Date(b[sortBy]);
+
+        if (sortDirection === "asc") {
+          return dateA.getTime() - dateB.getTime();
+        } else {
+          return dateB.getTime() - dateA.getTime();
+        }
+      });
+    }
+
+    setFilteredTasks(result);
+  }, [tasks, priorityFilter, statusFilter, sortBy, sortDirection]);
+
+  // Helper function to calculate time display
+  const calculateTimeDisplay = (start: string, end: string): string => {
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+    const diffMs = endDate.getTime() - startDate.getTime();
+    const diffHrs = diffMs / (1000 * 60 * 60);
+
+    if (diffHrs < 1) {
+      return `${Math.round(diffHrs * 60)} mins`;
+    }
+    return `${Math.round(diffHrs)} hrs`;
   };
 
-  const removeElement = (id: number) => {
-    setTodos((pv) => pv.filter((t) => t.id !== id));
+  const handleCheck = async (id: number | string) => {
+    try {
+      const task = tasks.find((t) => t.id === id);
+      if (!task) return;
+
+      const newStatus = task.status === "PENDING" ? "FINISHED" : "PENDING";
+      const endTime =
+        newStatus === "FINISHED" ? new Date().toISOString() : task.endTime;
+
+      // Update task in backend
+      const token = localStorage.getItem("authToken");
+      await axios.patch(
+        `http://localhost:8080/api/tasks/${id}`,
+        {
+          status: newStatus,
+          endTime,
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      // Update frontend state
+      setTasks(
+        tasks.map((t) =>
+          t.id === id
+            ? {
+                ...t,
+                status: newStatus,
+                checked: newStatus === "FINISHED",
+                endTime,
+                time: calculateTimeDisplay(t.startTime, endTime),
+              }
+            : t
+        )
+      );
+    } catch (error) {
+      console.error("Error updating task:", error);
+    }
+  };
+
+  const removeElement = async (id: number | string) => {
+    try {
+      // Delete from backend
+      const token = localStorage.getItem("authToken");
+      await axios.delete(`http://localhost:8080/api/tasks/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      // Update frontend state
+      setTasks(tasks.filter((t) => t.id !== id));
+    } catch (error) {
+      console.error("Error deleting task:", error);
+    }
   };
 
   return (
     <>
       <div className="mx-auto w-full max-w-xl md:max-w-3xl px-4 pt-4">
         <Header />
-        <Todos
+
+        {/* Filter and Sort Controls */}
+        <div className="flex flex-wrap gap-2 mb-4 items-center">
+          <div className="bg-zinc-800/80 p-2 rounded-md flex items-center gap-2">
+            <FiFilter className="text-zinc-400" />
+            <select
+              className="bg-zinc-700 text-white rounded px-2 py-1 text-sm"
+              value={
+                priorityFilter === null ? "all" : priorityFilter.toString()
+              }
+              onChange={(e) =>
+                setPriorityFilter(
+                  e.target.value === "all" ? null : Number(e.target.value)
+                )
+              }
+            >
+              <option value="all">All Priorities</option>
+              <option value="1">1 - LOW</option>
+              <option value="2">2 - MEDIUM</option>
+              <option value="3">3 - HIGH</option>
+              <option value="4">4 - URGENT</option>
+              <option value="5">5 - CRITICAL</option>
+            </select>
+          </div>
+
+          <div className="bg-zinc-800/80 p-2 rounded-md flex items-center gap-2">
+            <FiFilter className="text-zinc-400" />
+            <select
+              className="bg-zinc-700 text-white rounded px-2 py-1 text-sm"
+              value={statusFilter}
+              onChange={(e) =>
+                setStatusFilter(e.target.value as "all" | TaskStatus)
+              }
+            >
+              <option value="all">All Status</option>
+              <option value="PENDING">Pending</option>
+              <option value="FINISHED">Finished</option>
+            </select>
+          </div>
+
+          <div className="bg-zinc-800/80 p-2 rounded-md flex items-center gap-2">
+            {sortDirection === "asc" ? (
+              <FiArrowUp className="text-zinc-400" />
+            ) : (
+              <FiArrowDown className="text-zinc-400" />
+            )}
+            <select
+              className="bg-zinc-700 text-white rounded px-2 py-1 text-sm"
+              value={sortBy || "none"}
+              onChange={(e) => {
+                const value = e.target.value;
+                setSortBy(
+                  value === "none" ? null : (value as "startTime" | "endTime")
+                );
+              }}
+            >
+              <option value="none">Sort by</option>
+              <option value="startTime">Start Time</option>
+              <option value="endTime">End Time</option>
+            </select>
+            <button
+              onClick={() =>
+                setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"))
+              }
+              className="bg-zinc-700 text-white rounded p-1"
+            >
+              {sortDirection === "asc" ? <FiArrowUp /> : <FiArrowDown />}
+            </button>
+          </div>
+        </div>
+
+        <Tasks
           removeElement={removeElement}
-          todos={todos}
+          tasks={filteredTasks} // This prop name could also be changed to tasks
           handleCheck={handleCheck}
         />
       </div>
-      <Form setTodos={setTodos} />
+      <Form setTasks={setTasks} priorityMapping={numberToPriority} />
     </>
   );
 }
-const Header = () => {
-  const date = new Date();
-  const hours = date.getHours();
-
-  let greeting = "Good morning!";
-  let description = "Let's kick off the day with some productivity!";
-  let emoji = "🌞";
-
-  if (hours >= 12 && hours < 15) {
-    greeting = "Good afternoon!";
-    description = "Power through your tasks before the day ends!";
-    emoji = "🌤️";
-  } else if (hours >= 15 && hours < 18) {
-    greeting = "Hello there!";
-    description = "Time for a productive evening ahead!";
-    emoji = "☕";
-  } else if (hours >= 18 && hours < 22) {
-    greeting = "Good evening!";
-    description = "Let's wrap up some tasks before the day ends.";
-    emoji = "🌆";
-  } else if (hours >= 22 || hours < 1) {
-    greeting = "Working late?";
-    description = "Don't forget to get some rest soon!";
-    emoji = "🌙";
-  } else if (hours >= 1 && hours < 6) {
-    greeting = "Hello Night Owl!";
-    description = "The most productive hours for the focused mind.";
-    emoji = "🦉";
-  } else if (hours >= 6 && hours < 9) {
-    greeting = "Early bird!";
-    description = "Getting things done before everyone wakes up!";
-    emoji = "🐦";
-  } else if (hours >= 9 && hours < 12) {
-    greeting = "Good morning!";
-    description = "Let's make this day count!";
-    emoji = "🌞";
-  }
-
-  return (
-    <div className="mb-6">
-      <h1 className="text-xl font-medium text-white flex items-center gap-2">
-        {greeting}
-        <span className="inline-block cursor-pointer hover:animate-bounce">
-          {emoji}
-        </span>
-      </h1>
-      <p className="text-zinc-400">{description}</p>
-    </div>
-  );
-};
-
-const Form = ({ setTodos }: { setTodos: Dispatch<SetStateAction<TODO[]>> }) => {
-  const [visible, setVisible] = useState(false);
-
-  const [time, setTime] = useState(15);
-  const [text, setText] = useState("");
-  const [unit, setUnit] = useState<"mins" | "hrs">("mins");
-
-  const handleSubmit = () => {
-    if (!text.length) {
-      return;
-    }
-
-    setTodos((pv) => [
-      {
-        id: Math.random(),
-        text,
-        checked: false,
-        time: `${time} ${unit}`,
-      },
-      ...pv,
-    ]);
-
-    setTime(15);
-    setText("");
-    setUnit("mins");
-  };
-
-  return (
-    <div className="fixed bottom-6 left-1/2 w-full max-w-xl md:max-w-3xl -translate-x-1/2 px-4">
-      <AnimatePresence>
-        {visible && (
-          <motion.form
-            initial={{ opacity: 0, y: 25 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 25 }}
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleSubmit();
-            }}
-            className="mb-6 w-full rounded border border-zinc-700 bg-zinc-900 p-3 opacity-70"
-          >
-            <textarea
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              placeholder="What do you need to do?"
-              className="h-24 w-full resize-none rounded bg-zinc-900 p-3 text-sm text-zinc-50 placeholder-zinc-500 caret-zinc-50 focus:outline-0 opacity-70"
-            />
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5">
-                <input
-                  type="number"
-                  className="w-24 rounded bg-zinc-700 px-1.5 py-1 text-sm text-zinc-50 focus:outline-0"
-                  value={time}
-                  onChange={(e) => setTime(parseInt(e.target.value))}
-                />
-                <button
-                  type="button"
-                  onClick={() => setUnit("mins")}
-                  className={`rounded px-1.5 py-1 text-xs ${
-                    unit === "mins"
-                      ? "bg-white text-zinc-950"
-                      : "bg-zinc-300/20 text-zinc-300 transition-colors hover:bg-zinc-600 hover:text-zinc-200"
-                  }`}
-                >
-                  mins
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setUnit("hrs")}
-                  className={`rounded px-1.5 py-1 text-xs ${
-                    unit === "hrs"
-                      ? "bg-white text-zinc-950"
-                      : "bg-zinc-300/20 text-zinc-300 transition-colors hover:bg-zinc-600 hover:text-zinc-200"
-                  }`}
-                >
-                  hrs
-                </button>
-              </div>
-              <button
-                type="submit"
-                className="rounded bg-indigo-600 px-1.5 py-1 text-xs text-indigo-50 transition-colors hover:bg-indigo-500"
-              >
-                Submit
-              </button>
-            </div>
-          </motion.form>
-        )}
-      </AnimatePresence>
-      <button
-        onClick={() => setVisible((pv) => !pv)}
-        className="grid w-full place-content-center rounded-full border border-zinc-700 bg-zinc-900 opacity-70 cursor-pointer py-3 text-lg text-white transition-colors hover:bg-zinc-800 active:bg-zinc-900"
-      >
-        <FiPlus
-          className={`transition-transform ${
-            visible ? "rotate-45" : "rotate-0"
-          }`}
-        />
-      </button>
-    </div>
-  );
-};
-
-type TODO = {
-  id: number;
-  text: string;
-  checked: boolean;
-  time: string;
-};
-
-const Todos = ({
-  todos,
-  handleCheck,
-  removeElement,
-}: {
-  todos: TODO[];
-  handleCheck: Function;
-  removeElement: Function;
-}) => {
-  return (
-    <div className="w-full space-y-3">
-      <AnimatePresence>
-        {todos.map((t) => (
-          <Todo
-            handleCheck={handleCheck}
-            removeElement={removeElement}
-            id={t.id}
-            key={t.id}
-            checked={t.checked}
-            time={t.time}
-          >
-            {t.text}
-          </Todo>
-        ))}
-      </AnimatePresence>
-    </div>
-  );
-};
-
-const Todo = ({
-  removeElement,
-  handleCheck,
-  id,
-  children,
-  checked,
-  time,
-}: {
-  removeElement: Function;
-  handleCheck: Function;
-  id: number;
-  children: string;
-  checked: boolean;
-  time: string;
-}) => {
-  const [isPresent, safeToRemove] = usePresence();
-  const [scope, animate] = useAnimate();
-
-  useEffect(() => {
-    if (!isPresent) {
-      const exitAnimation = async () => {
-        animate(
-          "p",
-          {
-            color: checked ? "#6ee7b7" : "#fca5a5",
-          },
-          {
-            ease: "easeIn",
-            duration: 0.125,
-          }
-        );
-        await animate(
-          scope.current,
-          {
-            scale: 1.025,
-          },
-          {
-            ease: "easeIn",
-            duration: 0.125,
-          }
-        );
-
-        await animate(
-          scope.current,
-          {
-            opacity: 0,
-            x: checked ? 24 : -24,
-          },
-          {
-            delay: 0.75,
-          }
-        );
-        safeToRemove();
-      };
-
-      exitAnimation();
-    }
-  }, [isPresent]);
-
-  return (
-    <motion.div
-      ref={scope}
-      layout
-      className="relative flex w-full items-center gap-3 rounded border border-zinc-700 bg-zinc-900 p-3"
-    >
-      <input
-        type="checkbox"
-        checked={checked}
-        onChange={() => handleCheck(id)}
-        className="size-4 accent-indigo-400"
-      />
-
-      <p
-        className={`text-white transition-colors ${
-          checked && "text-zinc-400 line-through"
-        }`}
-      >
-        {children}
-      </p>
-      <div className="ml-auto flex gap-1.5">
-        <div className="flex items-center gap-1.5 whitespace-nowrap rounded bg-zinc-800 px-1.5 py-1 text-xs text-zinc-400">
-          <FiClock />
-          <span>{time}</span>
-        </div>
-        <button
-          onClick={() => removeElement(id)}
-          className="rounded bg-red-300/20 px-1.5 py-1 text-xs text-red-300 transition-colors hover:bg-red-600 hover:text-red-200"
-        >
-          <FiTrash2 />
-        </button>
-      </div>
-    </motion.div>
-  );
-};
