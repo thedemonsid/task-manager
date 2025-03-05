@@ -13,7 +13,6 @@ export const Form = ({ setTasks, priorityMapping }: FormProps) => {
   const [text, setText] = useState("");
   const [priority, setPriority] = useState(2);
 
-  const now = new Date();
   const localDateTimeFormat = (date: Date) => {
     return date.toISOString().slice(0, 16);
   };
@@ -93,7 +92,7 @@ export const Form = ({ setTasks, priorityMapping }: FormProps) => {
               e.preventDefault();
               handleSubmit();
             }}
-            className="mb-6 w-full rounded border border-zinc-700 bg-zinc-900 p-3 opacity-90"
+            className="mb-6 w-full rounded border border-zinc-700 bg-zinc-900 p-3"
           >
             <textarea
               value={text}
@@ -102,8 +101,8 @@ export const Form = ({ setTasks, priorityMapping }: FormProps) => {
               className="h-24 w-full resize-none rounded bg-zinc-900 p-3 text-sm text-zinc-50 placeholder-zinc-500 caret-zinc-50 focus:outline-0 opacity-70"
             />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-              <div className="flex items-center gap-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-10 mb-3">
+              <div className="flex flex-col gap-2">
                 <label className="text-zinc-400 text-sm">Priority:</label>
                 <select
                   value={priority}

@@ -226,11 +226,6 @@ export default function TaskManager(): JSX.Element {
           </div>
 
           <div className="bg-zinc-800/80 p-2 rounded-md flex items-center gap-2">
-            {sortDirection === "asc" ? (
-              <FiArrowUp className="text-zinc-400" />
-            ) : (
-              <FiArrowDown className="text-zinc-400" />
-            )}
             <select
               className="bg-zinc-700 text-white rounded px-2 py-1 text-sm"
               value={sortBy || "none"}
