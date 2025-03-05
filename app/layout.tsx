@@ -27,7 +27,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased dark md:overflow-y-clip`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased dark md:overflow-y-auto`}
       >
         <LightRay position={"top-left"} />
         <LightRay position={"bottom-right"} />

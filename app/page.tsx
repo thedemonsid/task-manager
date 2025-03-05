@@ -153,7 +153,7 @@ const Home = () => {
             taken control of their tasks.
           </p>
           <Link
-            href="/dashboard"
+            href="/tasks"
             className="inline-block bg-white text-zinc-900 font-medium px-6 py-3 rounded-lg hover:bg-zinc-200 transition-colors"
           >
             Try it for free
