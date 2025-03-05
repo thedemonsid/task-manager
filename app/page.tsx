@@ -1,68 +1,7 @@
-"use client";
-import { AnimatePresence, useAnimate, usePresence } from "framer-motion";
-import React, {
-  Dispatch,
-  SetStateAction,
-  useEffect,
-  useState,
-  JSX,
-} from "react";
-import { FiClock, FiPlus, FiTrash2 } from "react-icons/fi";
-import { motion } from "framer-motion";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
-export default function VanishList(): JSX.Element {
-  const [todos, setTodos] = useState<TODO[]>([
-    {
-      id: 1,
-      text: "Take out trash",
-      checked: false,
-      time: "5 mins",
-    },
-    {
-      id: 2,
-      text: "Do laundry",
-      checked: false,
-      time: "10 mins",
-    },
-    {
-      id: 3,
-      text: "Have existential crisis",
-      checked: true,
-      time: "12 hrs",
-    },
-    {
-      id: 4,
-      text: "Get dog food",
-      checked: false,
-      time: "1 hrs",
-    },
-  ]);
-
-  const handleCheck = (id: number) => {
-    setTodos((pv) =>
-      pv.map((t) => (t.id === id ? { ...t, checked: !t.checked } : t))
-    );
-  };
-
-  const removeElement = (id: number) => {
-    setTodos((pv) => pv.filter((t) => t.id !== id));
-  };
-
-  return (
-    <>
-      <div className="mx-auto w-full max-w-xl md:max-w-3xl px-4">
-        <Header />
-        <Todos
-          removeElement={removeElement}
-          todos={todos}
-          handleCheck={handleCheck}
-        />
-      </div>
-      <Form setTodos={setTodos} />
-    </>
-  );
-}
-const Header = () => {
+const Home = () => {
   const date = new Date();
   const hours = date.getHours();
 
@@ -101,247 +40,128 @@ const Header = () => {
   }
 
   return (
-    <div className="mb-6">
-      <h1 className="text-xl font-medium text-white flex items-center gap-2">
-        {greeting}
-        <span className="inline-block cursor-pointer hover:animate-bounce">
-          {emoji}
-        </span>
-      </h1>
-      <p className="text-zinc-400">{description}</p>
-    </div>
-  );
-};
+    <div className="relative min-h-screen overflow-hidden pt-4">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-col items-center text-center ">
+          <span className="inline-block text-4xl mb-3 animate-bounce">
+            {emoji}
+          </span>
+          <h1 className="text-4xl sm:text-5xl font-bold mb-4">{greeting}!</h1>
+          <p className="text-xl text-zinc-300 mb-8">
+            Welcome to your personal task management system
+          </p>
 
-const Form = ({ setTodos }: { setTodos: Dispatch<SetStateAction<TODO[]>> }) => {
-  const [visible, setVisible] = useState(false);
-
-  const [time, setTime] = useState(15);
-  const [text, setText] = useState("");
-  const [unit, setUnit] = useState<"mins" | "hrs">("mins");
-
-  const handleSubmit = () => {
-    if (!text.length) {
-      return;
-    }
-
-    setTodos((pv) => [
-      {
-        id: Math.random(),
-        text,
-        checked: false,
-        time: `${time} ${unit}`,
-      },
-      ...pv,
-    ]);
-
-    setTime(15);
-    setText("");
-    setUnit("mins");
-  };
-
-  return (
-    <div className="fixed bottom-6 left-1/2 w-full max-w-xl md:max-w-3xl -translate-x-1/2 px-4">
-      <AnimatePresence>
-        {visible && (
-          <motion.form
-            initial={{ opacity: 0, y: 25 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 25 }}
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleSubmit();
-            }}
-            className="mb-6 w-full rounded border border-zinc-700 bg-zinc-900 p-3 opacity-70"
-          >
-            <textarea
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              placeholder="What do you need to do?"
-              className="h-24 w-full resize-none rounded bg-zinc-900 p-3 text-sm text-zinc-50 placeholder-zinc-500 caret-zinc-50 focus:outline-0 opacity-70"
-            />
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5">
-                <input
-                  type="number"
-                  className="w-24 rounded bg-zinc-700 px-1.5 py-1 text-sm text-zinc-50 focus:outline-0"
-                  value={time}
-                  onChange={(e) => setTime(parseInt(e.target.value))}
-                />
-                <button
-                  type="button"
-                  onClick={() => setUnit("mins")}
-                  className={`rounded px-1.5 py-1 text-xs ${
-                    unit === "mins"
-                      ? "bg-white text-zinc-950"
-                      : "bg-zinc-300/20 text-zinc-300 transition-colors hover:bg-zinc-600 hover:text-zinc-200"
-                  }`}
-                >
-                  mins
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setUnit("hrs")}
-                  className={`rounded px-1.5 py-1 text-xs ${
-                    unit === "hrs"
-                      ? "bg-white text-zinc-950"
-                      : "bg-zinc-300/20 text-zinc-300 transition-colors hover:bg-zinc-600 hover:text-zinc-200"
-                  }`}
-                >
-                  hrs
-                </button>
-              </div>
-              <button
-                type="submit"
-                className="rounded bg-indigo-600 px-1.5 py-1 text-xs text-indigo-50 transition-colors hover:bg-indigo-500"
-              >
-                Submit
-              </button>
-            </div>
-          </motion.form>
-        )}
-      </AnimatePresence>
-      <button
-        onClick={() => setVisible((pv) => !pv)}
-        className="grid w-full place-content-center rounded-full border border-zinc-700 bg-zinc-900 opacity-70 cursor-pointer py-3 text-lg text-white transition-colors hover:bg-zinc-800 active:bg-zinc-900"
-      >
-        <FiPlus
-          className={`transition-transform ${
-            visible ? "rotate-45" : "rotate-0"
-          }`}
-        />
-      </button>
-    </div>
-  );
-};
-
-type TODO = {
-  id: number;
-  text: string;
-  checked: boolean;
-  time: string;
-};
-
-const Todos = ({
-  todos,
-  handleCheck,
-  removeElement,
-}: {
-  todos: TODO[];
-  handleCheck: Function;
-  removeElement: Function;
-}) => {
-  return (
-    <div className="w-full space-y-3">
-      <AnimatePresence>
-        {todos.map((t) => (
-          <Todo
-            handleCheck={handleCheck}
-            removeElement={removeElement}
-            id={t.id}
-            key={t.id}
-            checked={t.checked}
-            time={t.time}
-          >
-            {t.text}
-          </Todo>
-        ))}
-      </AnimatePresence>
-    </div>
-  );
-};
-
-const Todo = ({
-  removeElement,
-  handleCheck,
-  id,
-  children,
-  checked,
-  time,
-}: {
-  removeElement: Function;
-  handleCheck: Function;
-  id: number;
-  children: string;
-  checked: boolean;
-  time: string;
-}) => {
-  const [isPresent, safeToRemove] = usePresence();
-  const [scope, animate] = useAnimate();
-
-  useEffect(() => {
-    if (!isPresent) {
-      const exitAnimation = async () => {
-        animate(
-          "p",
-          {
-            color: checked ? "#6ee7b7" : "#fca5a5",
-          },
-          {
-            ease: "easeIn",
-            duration: 0.125,
-          }
-        );
-        await animate(
-          scope.current,
-          {
-            scale: 1.025,
-          },
-          {
-            ease: "easeIn",
-            duration: 0.125,
-          }
-        );
-
-        await animate(
-          scope.current,
-          {
-            opacity: 0,
-            x: checked ? 24 : -24,
-          },
-          {
-            delay: 0.75,
-          }
-        );
-        safeToRemove();
-      };
-
-      exitAnimation();
-    }
-  }, [isPresent]);
-
-  return (
-    <motion.div
-      ref={scope}
-      layout
-      className="relative flex w-full items-center gap-3 rounded border border-zinc-700 bg-zinc-900 p-3"
-    >
-      <input
-        type="checkbox"
-        checked={checked}
-        onChange={() => handleCheck(id)}
-        className="size-4 accent-indigo-400"
-      />
-
-      <p
-        className={`text-white transition-colors ${
-          checked && "text-zinc-400 line-through"
-        }`}
-      >
-        {children}
-      </p>
-      <div className="ml-auto flex gap-1.5">
-        <div className="flex items-center gap-1.5 whitespace-nowrap rounded bg-zinc-800 px-1.5 py-1 text-xs text-zinc-400">
-          <FiClock />
-          <span>{time}</span>
+          <div className="flex flex-col sm:flex-row gap-4">
+            <Button
+              size="lg"
+              className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:opacity-90"
+            >
+              Get Started
+            </Button>
+            <Button
+              size="lg"
+              variant="outline"
+              className="border-zinc-700 hover:bg-zinc-800"
+            >
+              Learn More
+            </Button>
+          </div>
         </div>
-        <button
-          onClick={() => removeElement(id)}
-          className="rounded bg-red-300/20 px-1.5 py-1 text-xs text-red-300 transition-colors hover:bg-red-600 hover:text-red-200"
-        >
-          <FiTrash2 />
-        </button>
+
+        {/* Features Section */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-16">
+          <div className="bg-zinc-800/50 p-6 rounded-lg border border-zinc-700/50 backdrop-blur-sm">
+            <div className="bg-blue-500/20 w-12 h-12 rounded-full flex items-center justify-center mb-4">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-6 w-6 text-blue-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                />
+              </svg>
+            </div>
+            <h2 className="text-xl font-medium mb-2">Task Organization</h2>
+            <p className="text-zinc-400">
+              Organize your tasks with our intuitive interface and keep track of
+              all your projects in one place.
+            </p>
+          </div>
+
+          <div className="bg-zinc-800/50 p-6 rounded-lg border border-zinc-700/50 backdrop-blur-sm">
+            <div className="bg-amber-500/20 w-12 h-12 rounded-full flex items-center justify-center mb-4">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-6 w-6 text-amber-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+            </div>
+            <h2 className="text-xl font-medium mb-2">Time Management</h2>
+            <p className="text-zinc-400">
+              Set deadlines, reminders, and prioritize your tasks to make the
+              most of your time.
+            </p>
+          </div>
+
+          <div className="bg-zinc-800/50 p-6 rounded-lg border border-zinc-700/50 backdrop-blur-sm">
+            <div className="bg-green-500/20 w-12 h-12 rounded-full flex items-center justify-center mb-4">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-6 w-6 text-green-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                />
+              </svg>
+            </div>
+            <h2 className="text-xl font-medium mb-2">Progress Tracking</h2>
+            <p className="text-zinc-400">
+              Monitor your productivity and track your progress with visual
+              charts and statistics.
+            </p>
+          </div>
+        </div>
+
+        {/* Call to Action */}
+        <div className="mt-20 text-center">
+          <h2 className="text-2xl font-bold mb-4">
+            Ready to boost your productivity?
+          </h2>
+          <p className="text-zinc-400 mb-8 max-w-2xl mx-auto">
+            Join thousands of users who have transformed their workflow and
+            taken control of their tasks.
+          </p>
+          <Link
+            href="/dashboard"
+            className="inline-block bg-white text-zinc-900 font-medium px-6 py-3 rounded-lg hover:bg-zinc-200 transition-colors"
+          >
+            Try it for free
+          </Link>
+        </div>
       </div>
-    </motion.div>
+    </div>
   );
 };
+
+export default Home;

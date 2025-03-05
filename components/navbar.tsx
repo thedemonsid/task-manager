@@ -2,6 +2,7 @@
 import Link from "next/link";
 import React from "react";
 import { FiHome, FiInfo, FiBarChart2 } from "react-icons/fi";
+import { FaTasks } from "react-icons/fa";
 import { Button } from "./ui/button";
 import { usePathname } from "next/navigation";
 
@@ -32,6 +33,18 @@ const Navbar = () => {
               >
                 <FiHome className="w-4 h-4" />
                 <span>Home</span>
+              </Link>
+              <Link
+                href="/tasks"
+                className={`flex items-center gap-2 px-3 py-2 text-sm font-medium transition-colors
+                  ${
+                    isActive("/tasks")
+                      ? "text-white bg-zinc-800/50 rounded-md"
+                      : "text-zinc-300 hover:text-white"
+                  }`}
+              >
+                <FaTasks className="w-4 h-4" />
+                <span>Tasks</span>
               </Link>
               <Link
                 href="/about"

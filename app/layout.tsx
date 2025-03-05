@@ -27,7 +27,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased dark`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased dark md:overflow-y-clip`}
       >
         <LightRay position={"top-left"} />
         <LightRay position={"bottom-right"} />
@@ -37,7 +37,7 @@ export default function RootLayout({
             backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' width='32' height='32' fill='none' stroke-width='2' stroke='%2318181b'%3e%3cpath d='M0 .5H31.5V32'/%3e%3c/svg%3e")`,
           }}
         >
-          <div className="flex flex-col gap-12">
+          <div className="flex flex-col pb-16">
             <Navbar />
             {children}
           </div>
