@@ -1,5 +1,5 @@
-"use client"
-import React from "react";
+"use client";
+import React, { useState } from "react";
 import Link from "next/link";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -14,6 +14,9 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { useRouter } from "next/navigation";
+import axios from "axios";
+import Cookies from "js-cookie";
 
 // Zod schema for login validation
 const loginSchema = z.object({
@@ -24,6 +27,10 @@ const loginSchema = z.object({
 });
 
 const LoginPage = () => {
+  const router = useRouter();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState("");
+
   // Initialize the form with Zod schema
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
@@ -34,9 +41,44 @@ const LoginPage = () => {
   });
 
   // Handle form submission
-  const onSubmit = (values: z.infer<typeof loginSchema>) => {
-    console.log(values);
-    // TODO: Implement actual login logic
+  const onSubmit = async (values: z.infer<typeof loginSchema>) => {
+    try {
+      setIsSubmitting(true);
+      setError("");
+
+      // Make API call to login user
+      const response = await axios.post(
+        "http://localhost:8080/api/users/login",
+        {
+          email: values.email,
+          password: values.password,
+        }
+      );
+
+      console.log("Login successful:", response.data);
+
+      // Store the token in both cookie and localStorage
+      if (response.data.token) {
+        // Set token in cookie for middleware authentication
+        Cookies.set("token", response.data.token, {
+          expires: 7, // 7 days
+          path: "/",
+        });
+
+        // Also keep in localStorage for API requests
+        localStorage.setItem("authToken", response.data.token);
+        localStorage.setItem("userEmail", values.email);
+        // Redirect to dashboard after successful login
+        router.push("/tasks");
+      } else {
+        setError("Invalid response from server");
+      }
+    } catch (err: any) {
+      console.error("Login error:", err);
+      setError(err.response?.data?.message || "Invalid email or password");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -49,6 +91,12 @@ const LoginPage = () => {
               Sign in to continue your productivity journey
             </p>
           </div>
+
+          {error && (
+            <div className="mb-6 p-3 bg-red-500/20 border border-red-500/50 rounded-md text-red-200 text-center">
+              {error}
+            </div>
+          )}
 
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -92,8 +140,9 @@ const LoginPage = () => {
               <Button
                 type="submit"
                 className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:opacity-90"
+                disabled={isSubmitting}
               >
-                Sign In
+                {isSubmitting ? "Signing In..." : "Sign In"}
               </Button>
             </form>
           </Form>

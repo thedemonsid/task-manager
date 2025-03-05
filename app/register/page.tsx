@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -14,6 +14,8 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { useRouter } from "next/navigation";
+import axios from "axios";
 
 // Zod schema for registration validation
 const registerSchema = z
@@ -41,6 +43,10 @@ const registerSchema = z
   });
 
 const RegisterPage = () => {
+  const router = useRouter();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState("");
+
   // Initialize the form with Zod schema
   const form = useForm<z.infer<typeof registerSchema>>({
     resolver: zodResolver(registerSchema),
@@ -53,14 +59,38 @@ const RegisterPage = () => {
   });
 
   // Handle form submission
-  const onSubmit = (values: z.infer<typeof registerSchema>) => {
-    console.log(values);
-    // TODO: Implement actual registration logic
+  const onSubmit = async (values: z.infer<typeof registerSchema>) => {
+    try {
+      setIsSubmitting(true);
+      setError("");
+
+      // Make API call to register user
+      const response = await axios.post(
+        "http://localhost:8080/api/users/register",
+        {
+          email: values.email,
+          password: values.password,
+          name: values.username,
+        }
+      );
+
+      console.log("Registration successful:", response.data);
+
+      // Redirect to login page after successful registration
+      router.push("/login");
+    } catch (err: any) {
+      console.error("Registration error:", err);
+      setError(
+        err.response?.data?.message || "Failed to register. Please try again."
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <div className="relative min-h-screen overflow-hidden pt-16">
-      <div className="max-w-md mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-zinc-800/50 p-8 rounded-lg border border-zinc-700/50 backdrop-blur-sm">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold mb-2">Create Your Account</h1>
@@ -68,6 +98,12 @@ const RegisterPage = () => {
               Start your productivity journey today
             </p>
           </div>
+
+          {error && (
+            <div className="mb-6 p-3 bg-red-500/20 border border-red-500/50 rounded-md text-red-200 text-center">
+              {error}
+            </div>
+          )}
 
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -148,8 +184,9 @@ const RegisterPage = () => {
               <Button
                 type="submit"
                 className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:opacity-90"
+                disabled={isSubmitting}
               >
-                Create Account
+                {isSubmitting ? "Creating Account..." : "Create Account"}
               </Button>
             </form>
           </Form>

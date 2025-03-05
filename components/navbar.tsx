@@ -1,13 +1,54 @@
 "use client";
 import Link from "next/link";
-import React from "react";
-import { FiHome, FiInfo, FiBarChart2 } from "react-icons/fi";
+import React, { useEffect, useState } from "react";
+import { FiHome, FiInfo, FiBarChart2, FiLogOut, FiMenu } from "react-icons/fi";
 import { FaTasks } from "react-icons/fa";
 import { Button } from "./ui/button";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import Cookies from "js-cookie";
+import { Avatar, AvatarFallback } from "./ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "./ui/dropdown-menu";
+import { Sheet, SheetContent, SheetTrigger } from "./ui/sheet";
 
 const Navbar = () => {
   const pathname = usePathname();
+  const router = useRouter();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userEmail, setUserEmail] = useState("");
+
+  useEffect(() => {
+    // Check if token exists in cookies
+    const token = Cookies.get("token");
+    setIsLoggedIn(!!token);
+
+    // Try to get user email from localStorage
+    const email = localStorage.getItem("userEmail");
+    if (email) {
+      setUserEmail(email);
+    }
+  }, []);
+
+  const getInitials = (email: string) => {
+    if (!email) return "U";
+    return email.charAt(0).toUpperCase();
+  };
+
+  const handleLogout = () => {
+    // Remove token from cookies and localStorage
+    Cookies.remove("token");
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("userEmail");
+
+    setIsLoggedIn(false);
+    // Redirect to login
+    router.push("/login");
+  };
 
   const isActive = (path: string) => {
     return pathname === path;
@@ -73,68 +114,94 @@ const Navbar = () => {
             </div>
           </div>
 
-          <div className="flex items-center">
-            <Button className="cursor-pointer">Sign in</Button>
+          <div className="flex items-center gap-4">
+            {/* Mobile Menu Button */}
+            <Sheet>
+              <SheetTrigger className="md:hidden px-2 py-4 rounded-md">
+                <FiMenu className="w-5 h-5" />
+              </SheetTrigger>
+              <SheetContent side="left" className="bg-transparent pt-4">
+                <div className="flex flex-col gap-6 mt-8">
+                  <Link
+                    href="/"
+                    className={`flex items-center gap-3 px-4 py-3 rounded-md ${
+                      isActive("/") ? "bg-zinc-800/70" : "hover:bg-zinc-800/40"
+                    }`}
+                  >
+                    <FiHome className="w-5 h-5" />
+                    <span className="text-base">Home</span>
+                  </Link>
+                  <Link
+                    href="/tasks"
+                    className={`flex items-center gap-3 px-4 py-3 rounded-md ${
+                      isActive("/tasks")
+                        ? "bg-zinc-800/70"
+                        : "hover:bg-zinc-800/40"
+                    }`}
+                  >
+                    <FaTasks className="w-5 h-5" />
+                    <span className="text-base">Tasks</span>
+                  </Link>
+                  <Link
+                    href="/about"
+                    className={`flex items-center gap-3 px-4 py-3 rounded-md ${
+                      isActive("/about")
+                        ? "bg-zinc-800/70"
+                        : "hover:bg-zinc-800/40"
+                    }`}
+                  >
+                    <FiInfo className="w-5 h-5" />
+                    <span className="text-base">About</span>
+                  </Link>
+                  <Link
+                    href="/dashboard"
+                    className={`flex items-center gap-3 px-4 py-3 rounded-md ${
+                      isActive("/dashboard")
+                        ? "bg-zinc-800/70"
+                        : "hover:bg-zinc-800/40"
+                    }`}
+                  >
+                    <FiBarChart2 className="w-5 h-5" />
+                    <span className="text-base">Dashboard</span>
+                  </Link>
+                </div>
+              </SheetContent>
+            </Sheet>
+
+            {/* User menu - same for both desktop and mobile */}
+            {isLoggedIn ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Avatar className="h-9 w-9 cursor-pointer">
+                    <AvatarFallback className="bg-red-400 text-white">
+                      {getInitials(userEmail)}
+                    </AvatarFallback>
+                  </Avatar>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  align="end"
+                  className="w-56 bg-zinc-900 border-zinc-800"
+                >
+                  <div className="px-2 py-1.5 text-sm">
+                    <p className="font-medium text-white">{userEmail}</p>
+                  </div>
+                  <DropdownMenuSeparator className="bg-zinc-800" />
+                  <DropdownMenuItem
+                    className="cursor-pointer flex items-center gap-2 focus:bg-zinc-800 text-zinc-200"
+                    onClick={handleLogout}
+                  >
+                    <FiLogOut className="w-4 h-4" />
+                    Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Link href="/login">
+                <Button className="cursor-pointer">Sign in</Button>
+              </Link>
+            )}
           </div>
         </nav>
-      </div>
-
-      {/* Mobile menu - displays only on smaller screens */}
-      <div className="md:hidden flex justify-center py-3 ">
-        <div className="flex space-x-10">
-          <Link
-            href="/"
-            className={`flex flex-col items-center transition-colors
-              ${
-                isActive("/") ? "text-white" : "text-zinc-300 hover:text-white"
-              }`}
-          >
-            <div
-              className={`p-1.5 rounded-full ${
-                isActive("/") ? "bg-zinc-800" : ""
-              }`}
-            >
-              <FiHome className="w-5 h-5" />
-            </div>
-            <span className="text-xs mt-1">Home</span>
-          </Link>
-          <Link
-            href="/about"
-            className={`flex flex-col items-center transition-colors
-              ${
-                isActive("/about")
-                  ? "text-white"
-                  : "text-zinc-300 hover:text-white"
-              }`}
-          >
-            <div
-              className={`p-1.5 rounded-full ${
-                isActive("/about") ? "bg-zinc-800" : ""
-              }`}
-            >
-              <FiInfo className="w-5 h-5" />
-            </div>
-            <span className="text-xs mt-1">About</span>
-          </Link>
-          <Link
-            href="/dashboard"
-            className={`flex flex-col items-center transition-colors
-              ${
-                isActive("/dashboard")
-                  ? "text-white"
-                  : "text-zinc-300 hover:text-white"
-              }`}
-          >
-            <div
-              className={`p-1.5 rounded-full ${
-                isActive("/dashboard") ? "bg-zinc-800" : ""
-              }`}
-            >
-              <FiBarChart2 className="w-5 h-5" />
-            </div>
-            <span className="text-xs mt-1">Dashboard</span>
-          </Link>
-        </div>
       </div>
     </div>
   );
