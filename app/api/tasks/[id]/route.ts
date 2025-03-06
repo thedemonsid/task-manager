@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verifyJwtToken } from "@/lib/auth";
-import { User, Task, Priority, TaskStatus } from "@prisma/client";
+import { Priority } from "@prisma/client";
 export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -25,7 +25,7 @@ export async function DELETE(
         { status: 401 }
       );
     }
-    // @ts-ignore
+    // @ts-expect-error DOEs not have time to fix this
     const userId = decodedToken.userId;
     if (!userId) {
       console.log("Invalid token: no userId");
@@ -97,7 +97,7 @@ export async function PATCH(
         { status: 401 }
       );
     }
-    // @ts-ignore
+    // @ts-expect-error DOEs not have time to fix this
     const userId = decodedToken.userId;
     if (!userId) {
       console.log("Invalid token: no userId");
@@ -193,7 +193,7 @@ export async function PUT(
         { status: 401 }
       );
     }
-    // @ts-ignore
+    // @ts-expect-error  DOEs not have time to fix this
     const userId = decodedToken.userId;
     if (!userId) {
       console.log("Invalid token: no userId");

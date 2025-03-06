@@ -200,9 +200,10 @@ export async function GET(request: NextRequest) {
 
     const { priority, status, sortBy, sortDir } = validationResult.data;
 
-    const filters: any = {};
-    if (priority) filters.priority = priority;
-    if (status) filters.status = status;
+    const filters: { priority?: Priority; status?: "PENDING" | "FINISHED" } =
+      {};
+    if (priority) filters.priority = priority as Priority;
+    if (status) filters.status = status as "PENDING" | "FINISHED";
 
     const sort = sortBy
       ? {

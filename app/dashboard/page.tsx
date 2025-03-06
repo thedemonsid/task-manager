@@ -30,7 +30,6 @@ import {
   CheckCircle,
   Activity,
   ArrowRight,
-  Calendar,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -72,6 +71,8 @@ const DashboardPage = () => {
   const [priorityStats, setPriorityStats] = useState<PriorityStats | null>(
     null
   );
+  console.log(completionStats);
+
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const authToken = localStorage.getItem("authToken");
@@ -190,8 +191,8 @@ const DashboardPage = () => {
       <div className="flex flex-col space-y-2">
         <h1 className="text-3xl font-bold">Dashboard</h1>
         <p className="text-zinc-400">
-          Welcome back, {localStorage.userEmail}! Here's an overview of your
-          tasks.
+          Welcome back, {localStorage.userEmail}! Here&apos;s an overview of
+          your tasks.
         </p>
       </div>
 

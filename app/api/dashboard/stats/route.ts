@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     if (!decodedToken) {
       return NextResponse.json({ success: false, message: "Invalid token" }, { status: 401 });
     }
-    // @ts-ignore
+    // @ts-expect-error DOEs not have time to fix this
     const userId = decodedToken.userId;
     const stats = await getUserTaskStats(userId);
 
