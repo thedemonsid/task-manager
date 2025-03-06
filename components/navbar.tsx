@@ -32,7 +32,7 @@ const Navbar = () => {
     if (email) {
       setUserEmail(email);
     }
-  }, []);
+  }, [pathname]);
 
   const getInitials = (email: string) => {
     if (!email) return "U";
