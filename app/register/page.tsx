@@ -66,14 +66,11 @@ const RegisterPage = () => {
       setError("");
 
       // Make API call to register user
-      const response = await axios.post(
-        "http://localhost:8080/api/users/register",
-        {
-          email: values.email,
-          password: values.password,
-          name: values.username,
-        }
-      );
+      const response = await axios.post("/api/users/register", {
+        email: values.email,
+        password: values.password,
+        name: values.username,
+      });
 
       console.log("Registration successful:", response.data);
 

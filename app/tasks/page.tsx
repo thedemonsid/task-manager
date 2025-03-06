@@ -7,7 +7,6 @@ import { Tasks } from "@/components/tasks";
 import { Form } from "@/components/task-form";
 import { Header } from "@/components/task-header";
 
-
 // Map numeric values back to priority enum
 const numberToPriority = {
   1: "LOW",
@@ -33,21 +32,23 @@ export default function TaskManager(): JSX.Element {
         const token = localStorage.getItem("authToken");
         if (!token) return;
 
-        const response = await axios.get("http://localhost:8080/api/tasks", {
+        const response = await axios.get("/api/tasks", {
           headers: { Authorization: `Bearer ${token}` },
         });
 
         // Transform the backend data to match our Task type
-        const transformedTasks: Task[] = response.data.map((task: any) => ({
-          id: task.id,
-          text: task.title,
-          checked: task.status === "FINISHED",
-          time: calculateTimeDisplay(task.startTime, task.endTime),
-          startTime: task.startTime,
-          endTime: task.endTime,
-          priority: task.priority,
-          status: task.status,
-        }));
+        const transformedTasks: Task[] = response.data.tasks.map(
+          (task: any) => ({
+            id: task.id,
+            text: task.title,
+            checked: task.status === "FINISHED",
+            time: calculateTimeDisplay(task.startTime, task.endTime),
+            startTime: task.startTime,
+            endTime: task.endTime,
+            priority: task.priority,
+            status: task.status,
+          })
+        );
 
         setTasks(transformedTasks);
       } catch (error) {
@@ -118,8 +119,8 @@ export default function TaskManager(): JSX.Element {
       const token = localStorage.getItem("authToken");
 
       if (isCompleting) {
-        await axios.put(
-          `http://localhost:8080/api/tasks/${id}`,
+        await axios.patch(
+          `/api/tasks/${id}`,
           {
             status: "FINISHED",
             endTime,
@@ -130,8 +131,8 @@ export default function TaskManager(): JSX.Element {
         );
       } else {
         // If un-completing the task, use the regular update endpoint
-        await axios.put(
-          `http://localhost:8080/api/tasks/${id}`,
+        await axios.patch(
+          `/api/tasks/${id}`,
           {
             status: "PENDING",
           },
@@ -164,7 +165,7 @@ export default function TaskManager(): JSX.Element {
     try {
       // Delete from backend
       const token = localStorage.getItem("authToken");
-      await axios.delete(`http://localhost:8080/api/tasks/${id}`, {
+      await axios.delete(`/api/tasks/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 

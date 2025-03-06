@@ -48,16 +48,13 @@ const LoginPage = () => {
       setError("");
 
       // Make API call to login user
-      const response = await axios.post(
-        "http://localhost:8080/api/users/login",
-        {
-          email: values.email,
-          password: values.password,
-        }
-      );
+      const response = await axios.post("/api/users/login", {
+        email: values.email,
+        password: values.password,
+      });
 
-      console.log("Login successful:", response.data);
-
+   
+      
       // Store the token in both cookie and localStorage
       if (response.data.token) {
         // Set token in cookie for middleware authentication

@@ -2,14 +2,16 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 const publicPaths = ["/login", "/register", "/", "/about"];
+const apiPaths = ["/api/users/login", "/api/users/register", "/api/users/me"];
 
 export function middleware(request: NextRequest) {
   const token = request.cookies.get("token")?.value || "";
   const pathname = request.nextUrl.pathname;
 
   const isPublicPath = publicPaths.includes(pathname);
+  const isApiPath = apiPaths.includes(pathname);
 
-  if (!isPublicPath && !token) {
+  if (!isPublicPath && !isApiPath && !token) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("from", pathname);
     return NextResponse.redirect(loginUrl);

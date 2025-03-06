@@ -2,6 +2,7 @@ import { useState } from "react";
 import { FiPlus } from "react-icons/fi";
 import { AnimatePresence, motion } from "framer-motion";
 import axios from "axios";
+import { log } from "node:console";
 
 type FormProps = {
   setTasks: React.Dispatch<React.SetStateAction<Task[]>>;
@@ -18,9 +19,9 @@ export const Form = ({ setTasks, priorityMapping }: FormProps) => {
   };
 
   //* Using ISO string format for indian time zone , there was time gap of 5.30 hours
-  const [startTime, setStartTime] = useState(new Date().toISOString());
+  const [startTime, setStartTime] = useState(localDateTimeFormat(new Date()));
   const [endTime, setEndTime] = useState(
-    new Date(Date.now() + 30 * 60 * 1000).toISOString()
+    localDateTimeFormat(new Date(Date.now() + 30 * 60 * 1000))
   );
 
   const handleSubmit = async () => {
@@ -39,7 +40,7 @@ export const Form = ({ setTasks, priorityMapping }: FormProps) => {
 
       const token = localStorage.getItem("authToken");
       const response = await axios.post(
-        "http://localhost:8080/api/tasks",
+        "/api/tasks",
         {
           title: text,
           startTime: startTimeISO,
@@ -56,9 +57,10 @@ export const Form = ({ setTasks, priorityMapping }: FormProps) => {
         diffHrs < 1
           ? `${Math.round(diffHrs * 60)} mins`
           : `${Math.round(diffHrs)} hrs`;
+      console.log(response.data);
 
       const newTask: Task = {
-        id: response.data.id,
+        id: response.data.task.id,
         text,
         checked: false,
         time: timeDisplay,
@@ -142,7 +144,7 @@ export const Form = ({ setTasks, priorityMapping }: FormProps) => {
 
             <div className="flex justify-end">
               <button
-              disabled={!text.length}
+                disabled={!text.length}
                 type="submit"
                 className="rounded bg-indigo-600 px-3 py-1.5 text-sm text-indigo-50 transition-colors hover:bg-indigo-500 cursor-pointer disabled:opacity-70"
               >
