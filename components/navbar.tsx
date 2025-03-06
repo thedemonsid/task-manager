@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { FiHome, FiInfo, FiBarChart2, FiLogOut, FiMenu } from "react-icons/fi";
 import { FaTasks } from "react-icons/fa";
 import { Button } from "./ui/button";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import Cookies from "js-cookie";
 import { Avatar, AvatarFallback } from "./ui/avatar";
 import {
@@ -18,7 +18,6 @@ import { Sheet, SheetContent, SheetTrigger } from "./ui/sheet";
 
 const Navbar = () => {
   const pathname = usePathname();
-  const router = useRouter();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userEmail, setUserEmail] = useState("");
 
@@ -46,8 +45,7 @@ const Navbar = () => {
     localStorage.removeItem("userEmail");
 
     setIsLoggedIn(false);
-    // Redirect to login
-    router.push("/login");
+    window.location.reload();
   };
 
   const isActive = (path: string) => {

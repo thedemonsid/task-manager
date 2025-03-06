@@ -15,7 +15,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { useRouter } from "next/navigation";
 import axios from "axios";
 import Cookies from "js-cookie";
 
@@ -27,11 +26,9 @@ const loginSchema = z.object({
 });
 
 const LoginPage = () => {
-  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
 
-  // Initialize the form with Zod schema
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -40,7 +37,7 @@ const LoginPage = () => {
     },
   });
 
-  // Handle form submission
+  
   const onSubmit = async (values: z.infer<typeof loginSchema>) => {
     try {
       setIsSubmitting(true);
@@ -51,19 +48,17 @@ const LoginPage = () => {
         password: values.password,
       });
 
-   
-      
       if (response.data.token) {
         Cookies.set("token", response.data.token, {
-          expires: 7, 
+          expires: 7,
           path: "/",
         });
 
         //* Also keep in localStorage for API requests
         localStorage.setItem("authToken", response.data.token);
         localStorage.setItem("userEmail", values.email);
-        
-        router.push("/tasks");
+
+        window.location.reload();
       } else {
         setError("Invalid response from server");
       }
