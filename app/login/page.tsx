@@ -19,7 +19,6 @@ import { useRouter } from "next/navigation";
 import axios from "axios";
 import Cookies from "js-cookie";
 
-// Zod schema for login validation
 const loginSchema = z.object({
   email: z.string().email({ message: "Invalid email address" }),
   password: z
@@ -47,7 +46,6 @@ const LoginPage = () => {
       setIsSubmitting(true);
       setError("");
 
-      // Make API call to login user
       const response = await axios.post("/api/users/login", {
         email: values.email,
         password: values.password,
@@ -55,18 +53,16 @@ const LoginPage = () => {
 
    
       
-      // Store the token in both cookie and localStorage
       if (response.data.token) {
-        // Set token in cookie for middleware authentication
         Cookies.set("token", response.data.token, {
-          expires: 7, // 7 days
+          expires: 7, 
           path: "/",
         });
 
-        // Also keep in localStorage for API requests
+        //* Also keep in localStorage for API requests
         localStorage.setItem("authToken", response.data.token);
         localStorage.setItem("userEmail", values.email);
-        // Redirect to dashboard after successful login
+        
         router.push("/tasks");
       } else {
         setError("Invalid response from server");

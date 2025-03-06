@@ -72,7 +72,6 @@ const Home = () => {
           </div>
         </div>
 
-        {/* Features Section */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-16">
           <div className="bg-zinc-800/50 p-6 rounded-lg border border-zinc-700/50 backdrop-blur-sm">
             <div className="bg-blue-500/20 w-12 h-12 rounded-full flex items-center justify-center mb-4">
@@ -147,7 +146,6 @@ const Home = () => {
           </div>
         </div>
 
-        {/* Call to Action */}
         <div className="mt-20 text-center">
           <h2 className="text-2xl font-bold mb-4">
             Ready to boost your productivity?

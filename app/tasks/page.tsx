@@ -7,7 +7,6 @@ import { Tasks } from "@/components/tasks";
 import { Form } from "@/components/task-form";
 import { Header } from "@/components/task-header";
 
-// Map numeric values back to priority enum
 const numberToPriority = {
   1: "LOW",
   2: "MEDIUM",
@@ -17,7 +16,6 @@ const numberToPriority = {
 } as const;
 
 export default function TaskManager(): JSX.Element {
-  // Rename state variables
   const [tasks, setTasks] = useState<Task[]>([]);
   const [filteredTasks, setFilteredTasks] = useState<Task[]>([]);
   const [priorityFilter, setPriorityFilter] = useState<number | null>(null);
@@ -25,7 +23,6 @@ export default function TaskManager(): JSX.Element {
   const [sortBy, setSortBy] = useState<"startTime" | "endTime" | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
-  // Fetch tasks from the backend
   useEffect(() => {
     const fetchTasks = async () => {
       try {
@@ -36,7 +33,6 @@ export default function TaskManager(): JSX.Element {
           headers: { Authorization: `Bearer ${token}` },
         });
 
-        // Transform the backend data to match our Task type
         const transformedTasks: Task[] = response.data.tasks.map(
           (task: any) => ({
             id: task.id,
@@ -59,23 +55,19 @@ export default function TaskManager(): JSX.Element {
     fetchTasks();
   }, []);
 
-  // Apply filters and sorting whenever tasks change or filters change
   useEffect(() => {
     let result = [...tasks];
 
-    // Apply priority filter using the enum mapping
     if (priorityFilter !== null) {
       const priorityEnum =
         numberToPriority[priorityFilter as keyof typeof numberToPriority];
       result = result.filter((task) => task.priority === priorityEnum);
     }
 
-    // Apply status filter
     if (statusFilter !== "all") {
       result = result.filter((task) => task.status === statusFilter);
     }
 
-    // Apply sorting
     if (sortBy) {
       result.sort((a, b) => {
         const dateA = new Date(a[sortBy]);
@@ -92,7 +84,6 @@ export default function TaskManager(): JSX.Element {
     setFilteredTasks(result);
   }, [tasks, priorityFilter, statusFilter, sortBy, sortDirection]);
 
-  // Helper function to calculate time display
   const calculateTimeDisplay = (start: string, end: string): string => {
     const startDate = new Date(start);
     const endDate = new Date(end);
@@ -110,12 +101,10 @@ export default function TaskManager(): JSX.Element {
       const task = tasks.find((t) => t.id === id);
       if (!task) return;
 
-      // Determine if we're completing or un-completing the task
       const isCompleting = task.status === "PENDING";
       const newStatus = isCompleting ? "FINISHED" : "PENDING";
       const endTime = isCompleting ? new Date().toISOString() : task.endTime;
 
-      // Get the authentication token
       const token = localStorage.getItem("authToken");
 
       if (isCompleting) {
@@ -130,7 +119,6 @@ export default function TaskManager(): JSX.Element {
           }
         );
       } else {
-        // If un-completing the task, use the regular update endpoint
         await axios.patch(
           `/api/tasks/${id}`,
           {
@@ -142,7 +130,6 @@ export default function TaskManager(): JSX.Element {
         );
       }
 
-      // Update frontend state
       setTasks(
         tasks.map((t) =>
           t.id === id
@@ -163,13 +150,11 @@ export default function TaskManager(): JSX.Element {
 
   const removeElement = async (id: number | string) => {
     try {
-      // Delete from backend
       const token = localStorage.getItem("authToken");
       await axios.delete(`/api/tasks/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      // Update frontend state
       setTasks(tasks.filter((t) => t.id !== id));
     } catch (error) {
       console.error("Error deleting task:", error);
@@ -181,7 +166,6 @@ export default function TaskManager(): JSX.Element {
       <div className="mx-auto w-full max-w-xl md:max-w-3xl px-4 pt-4">
         <Header />
 
-        {/* Filter and Sort Controls */}
         <div className="flex flex-wrap gap-2 mb-4 items-center">
           <div className="bg-zinc-800/80 p-2 rounded-md flex items-center gap-2">
             <FiFilter className="text-zinc-400" />
@@ -248,7 +232,7 @@ export default function TaskManager(): JSX.Element {
 
         <Tasks
           removeElement={removeElement}
-          tasks={filteredTasks} // This prop name could also be changed to tasks
+          tasks={filteredTasks}
           handleCheck={handleCheck}
         />
       </div>

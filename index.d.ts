@@ -13,3 +13,34 @@ type Task = {
   priority: TaskPriority;
   status: TaskStatus;
 };
+
+type DashboardStats = {
+  totalTasks: number;
+  completedTasks: number;
+  pendingTasks: number;
+  percentCompleted: number;
+  percentPending: number;
+  averageCompletionTime: number;
+};
+
+type CompletionTimeStats = {
+  averageCompletionTimeHours: number;
+  completedTaskCount: number;
+  pendingTaskCount: number;
+  averageCompletionTimeMinutes: number;
+  averageCompletionTimeDays: number;
+};
+
+type PriorityStats = {
+  totalTasks: number;
+  completedTasks: number;
+  pendingTasks: number;
+  priorityStats: {
+    priority: string;
+    pendingCount: number;
+    averageTimeLapsed: number;
+    averageTimeRemaining: number;
+    totalTimeLapsed: number;
+    totalTimeRemaining: number;
+  }[];
+};

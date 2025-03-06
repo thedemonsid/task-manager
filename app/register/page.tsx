@@ -18,7 +18,6 @@ import { Input } from "@/components/ui/input";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 
-// Zod schema for registration validation
 const registerSchema = z
   .object({
     username: z
@@ -48,7 +47,6 @@ const RegisterPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
 
-  // Initialize the form with Zod schema
   const form = useForm<z.infer<typeof registerSchema>>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
@@ -59,13 +57,11 @@ const RegisterPage = () => {
     },
   });
 
-  // Handle form submission
   const onSubmit = async (values: z.infer<typeof registerSchema>) => {
     try {
       setIsSubmitting(true);
       setError("");
 
-      // Make API call to register user
       const response = await axios.post("/api/users/register", {
         email: values.email,
         password: values.password,
@@ -74,7 +70,6 @@ const RegisterPage = () => {
 
       console.log("Registration successful:", response.data);
 
-      // Redirect to login page after successful registration
       router.push("/login");
     } catch (err: any) {
       console.error("Registration error:", err);
