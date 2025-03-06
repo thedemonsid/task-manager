@@ -9,7 +9,7 @@ export function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
   const isPublicPath = publicPaths.includes(pathname);
-  const isApiPath = apiPaths.includes(pathname);
+  const isApiPath = pathname.startsWith("/api") || apiPaths.includes(pathname);
 
   if (!isPublicPath && !isApiPath && !token) {
     const loginUrl = new URL("/login", request.url);

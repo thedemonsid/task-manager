@@ -133,7 +133,13 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      return NextResponse.json(
+        { success: false, message: "User not found" },
+        { status: 404 }
+      );
+    }
     const { title, description, startTime, endTime, priority } =
       validationResult.data;
 
@@ -147,7 +153,12 @@ export async function POST(request: NextRequest) {
         userId,
       },
     });
-
+    if (!task) {
+      return NextResponse.json(
+        { success: false, message: "Task not created" },
+        { status: 404 }
+      );
+    }
     return NextResponse.json(
       { success: true, message: "Task created successfully", task },
       { status: 201 }
