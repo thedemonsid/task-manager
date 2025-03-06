@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
-const Home = () => {
+const Home = async() => {
   const date = new Date();
   const hours = date.getHours();
 
