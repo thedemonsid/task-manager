@@ -2,7 +2,6 @@ import { useState } from "react";
 import { FiPlus } from "react-icons/fi";
 import { AnimatePresence, motion } from "framer-motion";
 import axios from "axios";
-import { log } from "node:console";
 
 type FormProps = {
   setTasks: React.Dispatch<React.SetStateAction<Task[]>>;

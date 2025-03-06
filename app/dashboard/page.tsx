@@ -1,26 +1,39 @@
-/* eslint-disable */
 "use client";
-import React, { useState, useEffect } from "react";
-import axios from "axios";
-import { useRouter } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
+import { useEffect, useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   PieChart,
   Pie,
+  Cell,
+  ResponsiveContainer,
   BarChart,
   Bar,
   XAxis,
   YAxis,
   Tooltip,
-  Legend,
-  Cell,
-  ResponsiveContainer,
 } from "recharts";
+import {
+  Clock,
+  AlertTriangle,
+  CheckCircle,
+  Activity,
+  ArrowRight,
+  Calendar,
+} from "lucide-react";
+import Link from "next/link";
 
-// Types for API responses
 type DashboardStats = {
   totalTasks: number;
   completedTasks: number;
@@ -28,22 +41,6 @@ type DashboardStats = {
   percentCompleted: number;
   percentPending: number;
   averageCompletionTime: number;
-};
-
-type PriorityMetric = {
-  priority: string;
-  pendingCount: number;
-  averageTimeLapsed: number;
-  averageTimeRemaining: number;
-  totalTimeLapsed: number;
-  totalTimeRemaining: number;
-};
-
-type PriorityStats = {
-  totalTasks: number;
-  completedTasks: number;
-  pendingTasks: number;
-  priorityStats: PriorityMetric[];
 };
 
 type CompletionTimeStats = {
@@ -54,538 +51,449 @@ type CompletionTimeStats = {
   averageCompletionTimeDays: number;
 };
 
-const Dashboard = () => {
-  const router = useRouter();
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+type PriorityStats = {
+  totalTasks: number;
+  completedTasks: number;
+  pendingTasks: number;
+  priorityStats: {
+    priority: string;
+    pendingCount: number;
+    averageTimeLapsed: number;
+    averageTimeRemaining: number;
+    totalTimeLapsed: number;
+    totalTimeRemaining: number;
+  }[];
+};
 
-  // State for API data
-  const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(
-    null
-  );
+const DashboardPage = () => {
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [completionStats, setCompletionStats] =
+    useState<CompletionTimeStats | null>(null);
   const [priorityStats, setPriorityStats] = useState<PriorityStats | null>(
     null
   );
-  const [completionTimeStats, setCompletionTimeStats] =
-    useState<CompletionTimeStats | null>(null);
-
-  // Priority colors for charts
-  const priorityColors = {
-    LOW: "#94a3b8", // slate-400
-    MEDIUM: "#60a5fa", // blue-400
-    HIGH: "#4ade80", // green-400
-    URGENT: "#fb923c", // orange-400
-    CRITICAL: "#f87171", // red-400
-  };
-
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const authToken = localStorage.getItem("authToken");
   useEffect(() => {
     const fetchDashboardData = async () => {
+      if (!authToken) return;
+
+      setIsLoading(true);
+      setError(null);
+
       try {
-        setLoading(true);
-        const token = localStorage.getItem("authToken");
+        // Fetch general stats
+        const statsResponse = await fetch("/api/dashboard/stats", {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+        });
 
-        if (!token) {
-          router.push("/login");
-          return;
-        }
+        if (!statsResponse.ok)
+          throw new Error("Failed to fetch dashboard stats");
+        const statsData = await statsResponse.json();
+        setStats(statsData.data);
 
-        const headers = { Authorization: `Bearer ${token}` };
-
-        // Fetch all dashboard data in parallel
-        const [statsResponse, priorityResponse, completionResponse] =
-          await Promise.all([
-            axios.get("http://localhost:8080/api/dashboard/stats", { headers }),
-            axios.get("http://localhost:8080/api/dashboard/priority", {
-              headers,
-            }),
-            axios.get("http://localhost:8080/api/dashboard/completion-time", {
-              headers,
-            }),
-          ]);
-
-        setDashboardStats(statsResponse.data);
-        setPriorityStats(priorityResponse.data);
-        setCompletionTimeStats(completionResponse.data);
-      } catch (err: any) {
-        console.error("Failed to fetch dashboard data:", err);
-        setError(
-          err.response?.data?.error ||
-            "An error occurred while fetching dashboard data"
+        // Fetch completion time stats
+        const completionResponse = await fetch(
+          "/api/dashboard/completion-time",
+          {
+            headers: {
+              Authorization: `Bearer ${authToken}`,
+            },
+          }
         );
 
-        if (err.response?.status === 401) {
-          router.push("/login");
-        }
+        if (!completionResponse.ok)
+          throw new Error("Failed to fetch completion time stats");
+        const completionData = await completionResponse.json();
+        setCompletionStats(completionData.data);
+
+        // Fetch priority stats
+        const priorityResponse = await fetch("/api/dashboard/priority", {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+        });
+
+        if (!priorityResponse.ok)
+          throw new Error("Failed to fetch priority stats");
+        const priorityData = await priorityResponse.json();
+        setPriorityStats(priorityData.data);
+      } catch (error) {
+        setError(
+          error instanceof Error
+            ? error.message
+            : "An error occurred while fetching dashboard data"
+        );
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
 
     fetchDashboardData();
-  }, [router]);
+  }, [authToken]);
 
-  // Prepare data for pie chart
-  const pieChartData = dashboardStats
-    ? [
-        { name: "Completed", value: dashboardStats.completedTasks },
-        { name: "Pending", value: dashboardStats.pendingTasks },
-      ]
-    : [];
-
-  // Format time to human readable hours
-  const formatHours = (hours: number) => {
-    if (hours === 0) return "0 hours";
-    if (hours < 1) return `${Math.round(hours * 60)} minutes`;
-    if (hours === 1) return "1 hour";
-    return `${hours.toFixed(1)} hours`;
-  };
-
-  if (loading) {
+  if (!authToken) {
     return (
-      <div className="container mx-auto p-6 max-w-7xl">
-        <h1 className="text-3xl font-bold mb-8">Dashboard</h1>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {[1, 2, 3, 4].map((i) => (
-            <Card key={i}>
-              <CardHeader className="pb-2">
-                <Skeleton className="bg-zinc-900 h-4 w-[120px]" />
-              </CardHeader>
-              <CardContent>
-                <Skeleton className="bg-zinc-900 h-8 w-[80px] mb-2" />
-                <Skeleton className="bg-zinc-900 h-4 w-full" />
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card className="bg-zinc-900">
-            <CardHeader>
-              <Skeleton className="bg-zinc-900 h-6 w-[150px]" />
-            </CardHeader>
-            <CardContent className="h-[300px] flex items-center justify-center">
-              <Skeleton className="bg-zinc-900 h-[250px] w-[250px] rounded-full" />
-            </CardContent>
-          </Card>
-          <Card className="bg-zinc-900">
-            <CardHeader>
-              <Skeleton className="bg-zinc-900 h-6 w-[180px]" />
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="space-y-2">
-                  <Skeleton className="bg-zinc-900 h-4 w-[120px]" />
-                  <Skeleton className="bg-zinc-900 h-6 w-full" />
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        </div>
+      <div className="flex items-center justify-center min-h-[70vh]">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle className="text-center">Sign In Required</CardTitle>
+            <CardDescription className="text-center">
+              Please sign in to view your dashboard
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex justify-center">
+            <Link href="/login">
+              <Button>Go to Sign In</Button>
+            </Link>
+          </CardContent>
+        </Card>
       </div>
     );
+  }
+
+  if (isLoading) {
+    return <DashboardSkeleton />;
   }
 
   if (error) {
     return (
-      <div className="container mx-auto p-6 flex items-center justify-center min-h-[60vh]">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle className="text-red-500">Error</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="mb-4">{error}</p>
-            <button
-              onClick={() => router.push("/tasks")}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md"
-            >
-              Go to Tasks
-            </button>
-          </CardContent>
-        </Card>
+      <div className="my-4 px-4">
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
       </div>
     );
   }
 
+  const COLORS = ["#3b82f6", "#f97316", "#10b981", "#f59e0b"];
+
+  const priorityChartData =
+    priorityStats?.priorityStats.map((stat) => ({
+      name: stat.priority,
+      value: stat.pendingCount,
+    })) || [];
+
+  const timeRemainingData =
+    priorityStats?.priorityStats.map((stat) => ({
+      name: stat.priority,
+      value: Math.round(stat.averageTimeRemaining / (1000 * 60 * 60)), // Convert to hours
+    })) || [];
+
   return (
-    <div className="container mx-auto p-6 max-w-7xl">
-      <h1 className="text-3xl font-bold mb-8">Dashboard</h1>
+    <div className="container mx-auto p-4 space-y-8">
+      <div className="flex flex-col space-y-2">
+        <h1 className="text-3xl font-bold">Dashboard</h1>
+        <p className="text-zinc-400">
+          Welcome back, {localStorage.userEmail}! Here's an overview of your
+          tasks.
+        </p>
+      </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <Card className="bg-zinc-900">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="bg-zinc-800/50 border border-zinc-700/50 backdrop-blur-sm">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Tasks
-            </CardTitle>
+            <CardDescription>Total Tasks</CardDescription>
+            <CardTitle className="text-2xl">{stats?.totalTasks || 0}</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {dashboardStats?.totalTasks || 0}
+            <div className="flex items-center text-sm text-zinc-400">
+              <Activity className="mr-1 h-4 w-4" />
+              All tasks in your system
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-zinc-900">
+        <Card className="bg-zinc-800/50 border border-zinc-700/50 backdrop-blur-sm">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Completed Tasks
+            <CardDescription>Completed</CardDescription>
+            <CardTitle className="text-2xl text-green-500">
+              {stats?.completedTasks || 0}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-500">
-              {dashboardStats?.completedTasks || 0}
+            <div className="flex items-center text-sm text-zinc-400">
+              <CheckCircle className="mr-1 h-4 w-4 text-green-500" />
+              {stats?.percentCompleted || 0}% completion rate
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-zinc-900">
+        <Card className="bg-zinc-800/50 border border-zinc-700/50 backdrop-blur-sm">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Pending Tasks
+            <CardDescription>Pending</CardDescription>
+            <CardTitle className="text-2xl text-amber-500">
+              {stats?.pendingTasks || 0}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-orange-500">
-              {dashboardStats?.pendingTasks || 0}
+            <div className="flex items-center text-sm text-zinc-400">
+              <AlertTriangle className="mr-1 h-4 w-4 text-amber-500" />
+              {stats?.percentPending || 0}% tasks pending
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-zinc-900">
+        <Card className="bg-zinc-800/50 border border-zinc-700/50 backdrop-blur-sm">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Average Completion Time
+            <CardDescription>Avg. Completion Time</CardDescription>
+            <CardTitle className="text-2xl">
+              {stats?.averageCompletionTime.toFixed(1) || 0} hrs
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {formatHours(
-                completionTimeStats?.averageCompletionTimeHours || 0
-              )}
+            <div className="flex items-center text-sm text-zinc-400">
+              <Clock className="mr-1 h-4 w-4" />
+              Per task on average
             </div>
           </CardContent>
         </Card>
       </div>
 
-      <Tabs defaultValue="overview">
-        <TabsList className="mb-6 bg-zinc-800">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="priority">Priority Analysis</TabsTrigger>
-          <TabsTrigger value="completion">Time Analysis</TabsTrigger>
-        </TabsList>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card className="bg-zinc-800/50 border border-zinc-700/50 backdrop-blur-sm">
+          <CardHeader>
+            <CardTitle className="text-xl">Task Completion Progress</CardTitle>
+            <CardDescription>Total vs. Completed vs. Pending</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div>
+                <div className="flex items-center justify-between">
+                  <div className="text-sm font-medium">Progress</div>
+                  <div className="text-sm text-zinc-400">
+                    {stats?.percentCompleted || 0}%
+                  </div>
+                </div>
+                <Progress
+                  value={stats?.percentCompleted || 0}
+                  className="mt-2 h-2"
+                />
+              </div>
 
-        {/* Overview Tab */}
-        <TabsContent value="overview" className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Task Distribution Pie Chart */}
-            <Card className="bg-zinc-900">
-              <CardHeader>
-                <CardTitle>Task Distribution</CardTitle>
-              </CardHeader>
-              <CardContent className="h-[350px]">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col">
+                  <div className="text-sm font-medium text-green-500">
+                    Completed
+                  </div>
+                  <div className="text-2xl font-bold">
+                    {stats?.completedTasks || 0}
+                  </div>
+                </div>
+                <div className="flex flex-col">
+                  <div className="text-sm font-medium text-amber-500">
+                    Pending
+                  </div>
+                  <div className="text-2xl font-bold">
+                    {stats?.pendingTasks || 0}
+                  </div>
+                </div>
+              </div>
+
+              <div className="h-[200px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
-                      data={pieChartData}
+                      data={[
+                        {
+                          name: "Completed",
+                          value: stats?.completedTasks || 0,
+                        },
+                        { name: "Pending", value: stats?.pendingTasks || 0 },
+                      ]}
                       cx="50%"
                       cy="50%"
-                      outerRadius={120}
-                      label={({ name, percent }) =>
-                        `${name}: ${(percent * 100).toFixed(0)}%`
-                      }
+                      labelLine={false}
+                      outerRadius={80}
+                      fill="#8884d8"
                       dataKey="value"
                     >
-                      <Cell fill="#4ade80" /> {/* Green for completed */}
-                      <Cell fill="#fb923c" /> {/* Orange for pending */}
+                      <Cell key="completed" fill="#10b981" />
+                      <Cell key="pending" fill="#f97316" />
                     </Pie>
-                    <Legend />
-                    <Tooltip formatter={(value) => [`${value} tasks`]} />
+                    <Tooltip />
                   </PieChart>
                 </ResponsiveContainer>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-            {/* Task Completion Progress */}
-            <Card className="bg-zinc-900">
-              <CardHeader>
-                <CardTitle>Task Completion Progress</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-8">
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="text-sm font-medium">
-                      Overall Completion
-                    </div>
-                    <div className="text-sm font-medium">
-                      {dashboardStats?.percentCompleted.toFixed(0)}%
-                    </div>
+        <Card className="bg-zinc-800/50 border border-zinc-700/50 backdrop-blur-sm">
+          <CardHeader>
+            <CardTitle className="text-xl">Tasks by Priority</CardTitle>
+            <CardDescription>Distribution of pending tasks</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <Tabs defaultValue="chart" className="w-full">
+                <TabsList className="grid grid-cols-2 mb-4">
+                  <TabsTrigger value="chart">Chart View</TabsTrigger>
+                  <TabsTrigger value="list">List View</TabsTrigger>
+                </TabsList>
+                <TabsContent value="chart">
+                  <div className="h-[240px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={priorityChartData}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={false}
+                          outerRadius={80}
+                          fill="#8884d8"
+                          dataKey="value"
+                          label={({ name, percent }) =>
+                            `${name}: ${(percent * 100).toFixed(0)}%`
+                          }
+                        >
+                          {priorityChartData.map((entry, index) => (
+                            <Cell
+                              key={`cell-${index}`}
+                              fill={COLORS[index % COLORS.length]}
+                            />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                      </PieChart>
+                    </ResponsiveContainer>
                   </div>
-                  <Progress
-                    value={dashboardStats?.percentCompleted || 0}
-                    className="h-2"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <h4 className="font-medium mb-3">Task Statistics</h4>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-zinc-800/40 rounded-lg p-4">
-                      <div className="text-sm text-muted-foreground">
-                        Completed
+                </TabsContent>
+                <TabsContent value="list">
+                  <div className="space-y-2">
+                    {priorityStats?.priorityStats.map((stat, i) => (
+                      <div
+                        key={stat.priority}
+                        className="flex items-center justify-between p-2 rounded-md bg-zinc-800"
+                      >
+                        <div className="flex items-center">
+                          <div
+                            className="w-3 h-3 rounded-full mr-2"
+                            style={{
+                              backgroundColor: COLORS[i % COLORS.length],
+                            }}
+                          ></div>
+                          <span className="capitalize">
+                            {stat.priority.toLowerCase()}
+                          </span>
+                        </div>
+                        <div className="font-medium">
+                          {stat.pendingCount} tasks
+                        </div>
                       </div>
-                      <div className="text-xl font-bold text-green-500 mt-1">
-                        {dashboardStats?.percentCompleted.toFixed(0)}%
-                      </div>
-                    </div>
-                    <div className="bg-zinc-800/40 rounded-lg p-4">
-                      <div className="text-sm text-muted-foreground">
-                        Pending
-                      </div>
-                      <div className="text-xl font-bold text-orange-500 mt-1">
-                        {dashboardStats?.percentPending.toFixed(0)}%
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Average Time Stats */}
-                <div>
-                  <h4 className="font-medium mb-3">Time Statistics</h4>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-zinc-800/40 rounded-lg p-4">
-                      <div className="text-sm text-muted-foreground">
-                        In Minutes
-                      </div>
-                      <div className="text-xl font-bold mt-1">
-                        {Math.round(
-                          completionTimeStats?.averageCompletionTimeMinutes || 0
-                        )}
-                      </div>
-                    </div>
-                    <div className="bg-zinc-800/40 rounded-lg p-4">
-                      <div className="text-sm text-muted-foreground">
-                        In Days
-                      </div>
-                      <div className="text-xl font-bold mt-1">
-                        {(
-                          completionTimeStats?.averageCompletionTimeDays || 0
-                        ).toFixed(2)}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        {/* Priority Analysis Tab */}
-        <TabsContent value="priority" className="space-y-6">
-          <Card className="bg-zinc-900">
-            <CardHeader>
-              <CardTitle>Tasks by Priority</CardTitle>
-            </CardHeader>
-            <CardContent className="h-[400px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={priorityStats?.priorityStats || []}>
-                  <XAxis dataKey="priority" />
-                  <YAxis
-                    label={{
-                      value: "Hours",
-                      angle: -90,
-                      position: "insideLeft",
-                    }}
-                  />
-                  <Tooltip
-                    formatter={(value: any) => [
-                      `${parseFloat(value).toFixed(2)} hours`,
-                    ]}
-                    labelFormatter={(label) => `Priority: ${label}`}
-                  />
-                  <Legend />
-                  <Bar
-                    name="Time Lapsed"
-                    dataKey="totalTimeLapsed"
-                    fill="#fb923c"
-                  >
-                    {priorityStats?.priorityStats.map((entry, index) => (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={
-                          priorityColors[
-                            entry.priority as keyof typeof priorityColors
-                          ] || "#fb923c"
-                        }
-                        fillOpacity={0.8}
-                      />
                     ))}
-                  </Bar>
-                  <Bar
-                    name="Time Remaining"
-                    dataKey="totalTimeRemaining"
-                    fill="#60a5fa"
-                  >
-                    {priorityStats?.priorityStats.map((entry, index) => (
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 gap-6">
+        <Card className="bg-zinc-800/50 border border-zinc-700/50 backdrop-blur-sm">
+          <CardHeader>
+            <CardTitle className="text-xl">
+              Average Time Remaining by Priority
+            </CardTitle>
+            <CardDescription>Hours remaining for pending tasks</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={timeRemainingData}>
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="value" name="Hours Remaining">
+                    {timeRemainingData.map((entry, index) => (
                       <Cell
                         key={`cell-${index}`}
-                        fill={
-                          priorityColors[
-                            entry.priority as keyof typeof priorityColors
-                          ] || "#60a5fa"
-                        }
-                        fillOpacity={0.4}
+                        fill={COLORS[index % COLORS.length]}
                       />
                     ))}
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
-            </CardContent>
-          </Card>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
-          {/* Priority Metrics Detailed Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {priorityStats?.priorityStats.map((stat, index) => (
-              <Card key={index} className="bg-zinc-900">
-                <CardHeader className="pb-2">
-                  <div className="flex items-center">
-                    <div
-                      className="w-3 h-3 rounded-full mr-2"
-                      style={{
-                        backgroundColor:
-                          priorityColors[
-                            stat.priority as keyof typeof priorityColors
-                          ],
-                      }}
-                    />
-                    <CardTitle className="text-base">
-                      {stat.priority} Priority
-                    </CardTitle>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Pending Tasks</span>
-                    <span>{stat.pendingCount}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Time Lapsed</span>
-                    <span>{formatHours(stat.totalTimeLapsed)}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">
-                      Time Remaining
-                    </span>
-                    <span>{formatHours(stat.totalTimeRemaining)}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">
-                      Average Time Lapsed
-                    </span>
-                    <span>{formatHours(stat.averageTimeLapsed)}</span>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </TabsContent>
-
-        {/* Time Analysis Tab */}
-        <TabsContent value="completion" className="space-y-6">
-          <Card className="bg-zinc-900">
-            <CardHeader>
-              <CardTitle>Task Completion Time</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-zinc-800/40 rounded-lg p-4">
-                  <div className="text-sm text-muted-foreground mb-1">
-                    Average Completion Time
-                  </div>
-                  <div className="text-xl font-bold">
-                    {formatHours(
-                      completionTimeStats?.averageCompletionTimeHours || 0
-                    )}
-                  </div>
-                </div>
-
-                <div className="bg-zinc-800/40 rounded-lg p-4">
-                  <div className="text-sm text-muted-foreground mb-1">
-                    In Minutes
-                  </div>
-                  <div className="text-xl font-bold">
-                    {Math.round(
-                      completionTimeStats?.averageCompletionTimeMinutes || 0
-                    )}{" "}
-                    mins
-                  </div>
-                </div>
-
-                <div className="bg-zinc-800/40 rounded-lg p-4">
-                  <div className="text-sm text-muted-foreground mb-1">
-                    In Days
-                  </div>
-                  <div className="text-xl font-bold">
-                    {(
-                      completionTimeStats?.averageCompletionTimeDays || 0
-                    ).toFixed(2)}{" "}
-                    days
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-zinc-800/20 rounded-lg p-6">
-                <h3 className="text-lg font-medium mb-4">
-                  Task Completion Efficiency
-                </h3>
-                <div className="space-y-4">
-                  <div>
-                    <div className="flex justify-between mb-1">
-                      <span className="text-sm text-muted-foreground">
-                        Completed Tasks
-                      </span>
-                      <span className="text-sm">
-                        {completionTimeStats?.completedTaskCount || 0} tasks
-                      </span>
-                    </div>
-                    <Progress
-                      value={
-                        dashboardStats?.totalTasks
-                          ? ((completionTimeStats?.completedTaskCount || 0) /
-                              dashboardStats.totalTasks) *
-                            100
-                          : 0
-                      }
-                      className="h-2"
-                    />
-                  </div>
-
-                  <div>
-                    <div className="flex justify-between mb-1">
-                      <span className="text-sm text-muted-foreground">
-                        Pending Tasks
-                      </span>
-                      <span className="text-sm">
-                        {completionTimeStats?.pendingTaskCount || 0} tasks
-                      </span>
-                    </div>
-                    <Progress
-                      value={
-                        dashboardStats?.totalTasks
-                          ? ((completionTimeStats?.pendingTaskCount || 0) /
-                              dashboardStats.totalTasks) *
-                            100
-                          : 0
-                      }
-                      className="h-2"
-                    />
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+      <div className="flex justify-center mt-8">
+        <Link href="/tasks">
+          <Button className="flex items-center bg-gradient-to-r from-blue-500 to-indigo-600 hover:opacity-90">
+            Manage Your Tasks
+            <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
+        </Link>
+      </div>
     </div>
   );
 };
 
-export default Dashboard;
+// Loading skeleton for the dashboard
+const DashboardSkeleton = () => {
+  return (
+    <div className="container mx-auto p-4 space-y-8">
+      <div className="flex flex-col space-y-2">
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-4 w-96" />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {Array(4)
+          .fill(null)
+          .map((_, i) => (
+            <Card
+              key={i}
+              className="bg-zinc-800/50 border border-zinc-700/50 backdrop-blur-sm"
+            >
+              <CardHeader className="pb-2">
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-8 w-24" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-4 w-full" />
+              </CardContent>
+            </Card>
+          ))}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card className="bg-zinc-800/50 border border-zinc-700/50 backdrop-blur-sm">
+          <CardHeader>
+            <Skeleton className="h-6 w-48" />
+            <Skeleton className="h-4 w-64" />
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-[200px] w-full" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-zinc-800/50 border border-zinc-700/50 backdrop-blur-sm">
+          <CardHeader>
+            <Skeleton className="h-6 w-48" />
+            <Skeleton className="h-4 w-64" />
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-[240px] w-full" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+};
+
+export default DashboardPage;
