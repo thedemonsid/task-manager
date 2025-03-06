@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
-const Home = async() => {
+const Home = async () => {
   const date = new Date();
-  const hours = date.getHours();
+  const hours = (date.getHours() + 5) % 24; //* Servers are not india so proble with the time
 
   let greeting = "Good morning!";
 
