@@ -172,7 +172,7 @@ export async function PATCH(
 // Updtate the tasks using put method with id and body with new data
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     console.log("PUT request received");
@@ -203,7 +203,7 @@ export async function PUT(
       );
     }
 
-    const { id } = params;
+    const { id } = await params;
     console.log(`Task ID to update: ${id}`);
 
     const task = await prisma.task.findUnique({ where: { id } });
