@@ -20,7 +20,7 @@ export const Form = ({ setTasks, priorityMapping }: FormProps) => {
   //* Using ISO string format for indian time zone , there was time gap of 5.30 hours
   const [startTime, setStartTime] = useState(localDateTimeFormat(new Date()));
   const [endTime, setEndTime] = useState(
-    localDateTimeFormat(new Date(Date.now() + 30 * 60 * 1000))
+    localDateTimeFormat(new Date(Date.now() + 300 * 60 * 1000))
   );
 
   const handleSubmit = async () => {

@@ -75,7 +75,11 @@ const DashboardPage = () => {
 
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const authToken = localStorage.getItem("authToken");
+  const [authToken, setAuthToken] = useState<string | null>(null);
+  useEffect(() => {
+    const token = localStorage.getItem("authToken");
+    setAuthToken(token);
+  }, []);
   useEffect(() => {
     const fetchDashboardData = async () => {
       if (!authToken) return;
@@ -191,8 +195,7 @@ const DashboardPage = () => {
       <div className="flex flex-col space-y-2">
         <h1 className="text-3xl font-bold">Dashboard</h1>
         <p className="text-zinc-400">
-          Welcome back, {localStorage.userEmail}! Here&apos;s an overview of
-          your tasks.
+          Welcome back, User! Here&apos;s an overview of your tasks.
         </p>
       </div>
 
