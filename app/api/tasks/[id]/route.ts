@@ -6,25 +6,38 @@ import { z } from "zod";
 
 const taskUpdateSchema = z
   .object({
-    title: z.string().min(1, "Title is required"),
-    startTime: z.string().refine((val) => !isNaN(new Date(val).getTime()), {
-      message: "Invalid start time format",
-    }),
-    endTime: z.string().refine((val) => !isNaN(new Date(val).getTime()), {
-      message: "Invalid end time format",
-    }),
-    priority: z.nativeEnum(Priority, {
-      errorMap: () => ({ message: "Invalid priority value" }),
-    }),
-    status: z.nativeEnum(TaskStatus, {
-      errorMap: () => ({ message: "Invalid status value" }),
-    }),
+    title: z.string().min(1, "Title is required").optional(),
+    startTime: z
+      .string()
+      .refine((val) => !isNaN(new Date(val).getTime()), {
+        message: "Invalid start time format",
+      })
+      .optional(),
+    endTime: z
+      .string()
+      .refine((val) => !isNaN(new Date(val).getTime()), {
+        message: "Invalid end time format",
+      })
+      .optional(),
+    priority: z
+      .nativeEnum(Priority, {
+        errorMap: () => ({ message: "Invalid priority value" }),
+      })
+      .optional(),
+    status: z
+      .nativeEnum(TaskStatus, {
+        errorMap: () => ({ message: "Invalid status value" }),
+      })
+      .optional(),
   })
   .refine(
     (data) => {
-      const startDate = new Date(data.startTime);
-      const endDate = new Date(data.endTime);
-      return startDate < endDate;
+      if (data.startTime && data.endTime) {
+        const startDate = new Date(data.startTime);
+        const endDate = new Date(data.endTime);
+        return startDate < endDate;
+      }
+      return true;
     },
     {
       message: "Start time must be before end time",
@@ -272,15 +285,24 @@ export async function PUT(
     const { title, startTime, endTime, priority, status } =
       validationResult.data;
 
+    const updateData: Partial<{
+      title?: string;
+      startTime?: Date;
+      endTime?: Date;
+      priority?: Priority;
+      status?: TaskStatus;
+    }> = {};
+
+    if (title !== undefined) updateData.title = title;
+    if (startTime !== undefined) updateData.startTime = new Date(startTime);
+    if (endTime !== undefined) updateData.endTime = new Date(endTime);
+    if (priority !== undefined) updateData.priority = priority;
+    if (status !== undefined) updateData.status = status;
+
+    // Update the task with only the fields that were provided
     const updatedTask = await prisma.task.update({
       where: { id },
-      data: {
-        title,
-        startTime: new Date(startTime),
-        endTime: new Date(endTime),
-        priority,
-        status,
-      },
+      data: updateData,
     });
 
     console.log("Task updated successfully");
