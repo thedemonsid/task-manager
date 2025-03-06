@@ -1,7 +1,36 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verifyJwtToken } from "@/lib/auth";
-import { Priority } from "@prisma/client";
+import { Priority, TaskStatus } from "@prisma/client";
+import { z } from "zod";
+
+const taskUpdateSchema = z
+  .object({
+    title: z.string().min(1, "Title is required"),
+    startTime: z.string().refine((val) => !isNaN(new Date(val).getTime()), {
+      message: "Invalid start time format",
+    }),
+    endTime: z.string().refine((val) => !isNaN(new Date(val).getTime()), {
+      message: "Invalid end time format",
+    }),
+    priority: z.nativeEnum(Priority, {
+      errorMap: () => ({ message: "Invalid priority value" }),
+    }),
+    status: z.nativeEnum(TaskStatus, {
+      errorMap: () => ({ message: "Invalid status value" }),
+    }),
+  })
+  .refine(
+    (data) => {
+      const startDate = new Date(data.startTime);
+      const endDate = new Date(data.endTime);
+      return startDate < endDate;
+    },
+    {
+      message: "Start time must be before end time",
+      path: ["startTime"], // Attach the error to the startTime field
+    }
+  );
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -169,7 +198,6 @@ export async function PATCH(
   }
 }
 
-// Updtate the tasks using put method with id and body with new data
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -193,7 +221,8 @@ export async function PUT(
         { status: 401 }
       );
     }
-    // @ts-expect-error  DOEs not have time to fix this
+
+    // @ts-expect-error DOEs not have time to fix this
     const userId = decodedToken.userId;
     if (!userId) {
       console.log("Invalid token: no userId");
@@ -203,6 +232,7 @@ export async function PUT(
       );
     }
 
+    // Get and validate task ID
     const { id } = await params;
     console.log(`Task ID to update: ${id}`);
 
@@ -223,39 +253,43 @@ export async function PUT(
       );
     }
 
+    const requestBody = await request.json();
+    const validationResult = taskUpdateSchema.safeParse(requestBody);
+
+    if (!validationResult.success) {
+      const errors = validationResult.error.format();
+      console.log("Validation errors:", errors);
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Validation failed",
+          errors: validationResult.error.issues,
+        },
+        { status: 400 }
+      );
+    }
+
     const { title, startTime, endTime, priority, status } =
-      await request.json();
-    console.log(`New title: ${title}`);
-    console.log(`New startTime: ${startTime}`);
-    console.log(`New endTime: ${endTime}`);
-    console.log(`New priority: ${priority}`);
-    console.log(`New status: ${status}`);
+      validationResult.data;
 
-    const priorityEnum = priority.toUpperCase();
-    if (!Object.values(Priority).includes(priorityEnum)) {
-      console.log("Invalid priority");
-      return NextResponse.json(
-        { success: false, message: "Invalid priority" },
-        { status: 400 }
-      );
-    }
-
-    if (!["PENDING", "FINISHED"].includes(status)) {
-      console.log("Invalid status");
-      return NextResponse.json(
-        { success: false, message: "Invalid status" },
-        { status: 400 }
-      );
-    }
-
-    await prisma.task.update({
+    const updatedTask = await prisma.task.update({
       where: { id },
-      data: { title, startTime, endTime, priority: priorityEnum, status },
+      data: {
+        title,
+        startTime: new Date(startTime),
+        endTime: new Date(endTime),
+        priority,
+        status,
+      },
     });
 
     console.log("Task updated successfully");
     return NextResponse.json(
-      { success: true, message: "Task updated successfully" },
+      {
+        success: true,
+        message: "Task updated successfully",
+        task: updatedTask,
+      },
       { status: 200 }
     );
   } catch (error) {
