@@ -51,7 +51,7 @@ const About = async() => {
             </p>
             <p className="text-zinc-300">
               The true breakthrough came when I created my first AI chess game.
-              Watching pieces move across the board, guided by logic I&apso;d
+              Watching pieces move across the board, guided by logic I&apos;d
               written, was both thrilling and empowering—it completely hooked me
               on programming and set me on my current path.
             </p>

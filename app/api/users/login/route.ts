@@ -38,7 +38,6 @@ export async function POST(request: NextRequest) {
 
     const { email, password } = validationResult.data;
 
-    // Find the user by email
     const user = await prisma.user.findUnique({
       where: { email },
     });
@@ -54,7 +53,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Compare provided password with stored hash
     const isPasswordValid = await bcryptjs.compare(password, user.password);
 
     if (!isPasswordValid) {
@@ -68,14 +66,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate JWT token
     const token = jwt.sign(
       { userId: user.id },
-      process.env.JWT_SECRET || "your-secret-key",
+      process.env.JWT_SECRET || "some-secret-key",
       { expiresIn: "7d" }
     );
 
-    // Return user info without the password
+    //* Return user info without the password
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password: userPassword, ...userWithoutPassword } = user;
 

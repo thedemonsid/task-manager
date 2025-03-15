@@ -1,52 +1,13 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import Greeting from "@/components/greeting";
 
 const Home = async () => {
-  const date = new Date();
-  const hours = (date.getHours() + 5) % 24; //* Servers are not india so proble with the time
-
-  let greeting = "Good morning!";
-
-  let emoji = "🌞";
-
-  if (hours >= 12 && hours < 15) {
-    greeting = "Good afternoon!";
-
-    emoji = "🌤️";
-  } else if (hours >= 15 && hours < 18) {
-    greeting = "Hello there!";
-
-    emoji = "☕";
-  } else if (hours >= 18 && hours < 22) {
-    greeting = "Good evening!";
-
-    emoji = "🌆";
-  } else if (hours >= 22 || hours < 1) {
-    greeting = "Working late?";
-
-    emoji = "🌙";
-  } else if (hours >= 1 && hours < 6) {
-    greeting = "Hello Night Owl!";
-
-    emoji = "🦉";
-  } else if (hours >= 6 && hours < 9) {
-    greeting = "Early bird!";
-
-    emoji = "🐦";
-  } else if (hours >= 9 && hours < 12) {
-    greeting = "Good morning!";
-
-    emoji = "🌞";
-  }
-
   return (
     <div className="relative min-h-screen overflow-hidden pt-4">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col items-center text-center ">
-          <span className="inline-block text-4xl mb-3 animate-bounce">
-            {emoji}
-          </span>
-          <h1 className="text-4xl sm:text-5xl font-bold mb-4">{greeting}!</h1>
+          <Greeting></Greeting>
           <p className="text-xl text-zinc-300 mb-8">
             Welcome to your personal task management system
           </p>
